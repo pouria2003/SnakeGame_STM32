@@ -402,8 +402,16 @@ void introPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+<<<<<<< HEAD
 	 osDelay(1);
 
+=======
+	  setCursor(0, 0);
+	  print("██  ████          ██");
+	  print("█  █ ██ █  SNAKE   █");
+	  print("█   ████   GAME!   █");
+	  print("██   ██           ██");
+>>>>>>> 451cad21f3dbcd05b4a3d122382481fd95c02573
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
