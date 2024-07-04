@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "LiquidCrystal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -49,6 +50,8 @@ PCD_HandleTypeDef hpcd_USB_FS;
 osThreadId IntroPageHandle;
 osThreadId MenuPageHandle;
 /* USER CODE BEGIN PV */
+
+uint8_t menu_selected_item = 0;
 
 /* USER CODE END PV */
 
@@ -399,6 +402,7 @@ void introPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+	 osDelay(1);
 
   }
   osThreadTerminate(NULL);
@@ -418,7 +422,11 @@ void menuPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
+	  setCursor(0, 1); print(menu_selected_item == 1 ? "-" : " "); print("SETTING");
+	  setCursor(0, 2); print(menu_selected_item == 2 ? "-" : " "); print("MODE");
+	  setCursor(0, 3); print(menu_selected_item == 3 ? "-" : " "); print("ABOUT");
+	  osDelay(100000);
   }
   /* USER CODE END menuPage_t */
 }
