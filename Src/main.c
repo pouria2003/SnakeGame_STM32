@@ -399,7 +399,11 @@ void introPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-
+	  setCursor(0, 0);
+	  print("██  ████          ██");
+	  print("█  █ ██ █  SNAKE   █");
+	  print("█   ████   GAME!   █");
+	  print("██   ██           ██");
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
