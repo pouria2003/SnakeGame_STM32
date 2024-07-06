@@ -10,6 +10,15 @@
 
 #include "main.h"
 
+enum Threads{
+	INTRO_PAGE = 0,
+	MENU_PAGE,
+	START,
+	SETTING,
+	MODE,
+	ABOUT
+};
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 

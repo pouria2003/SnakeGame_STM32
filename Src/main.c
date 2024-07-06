@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
+#include "callbacksAndFunctions.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -32,6 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define NTHREADS 6
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -80,11 +81,7 @@ void about_t(void const * argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-enum GameState {
-	INTRO,
-	MENU,
 
-};
 
 enum ChooseState {
 	CHOOSING,
@@ -92,13 +89,15 @@ enum ChooseState {
 
 };
 
-uint8_t game_state = INTRO;
+uint8_t tsignals[NTHREADS];
+uint8_t game_state = 0;
 uint8_t initial_health = 5;
 uint8_t initial_speed = 1;
 uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
 char player_name[6] = "pouria";
+
 
 /* USER CODE END 0 */
 
@@ -189,8 +188,11 @@ int main(void)
   osThreadDef(about, about_t, osPriorityIdle, 0, 128);
   aboutHandle = osThreadCreate(osThread(about), NULL);
 
+
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -552,7 +554,7 @@ void introPage_t(void const * argument)
 	  str[0] = str[1] = str[5] = str[6] = str[18] = str[19] = 255;
 	  print(str);
 
-	  osDelay(100000);
+	  break;
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
@@ -573,19 +575,24 @@ void menuPage_t(void const * argument)
   static uint8_t menu_selected_item = 0;
   for(;;)
   {
-	  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+	  osSignalWait(0, osWaitForever);
 
-	  switch(os_signal_event.value.v) {
+	  clear();
+
+	  switch(tsignals[MENU_PAGE]) {
+	  case 0x00:
+		  menu_selected_item = 0;
+		  break;
 	  case 0x02:
-		  menu_selected_item += 1;
+		  if(menu_selected_item == 0) menu_selected_item = 4;
+		  menu_selected_item -= 1;
 		  break;
 	  case 0x0A:
-		  menu_selected_item -= 1;
+		  menu_selected_item += 1;
+		  if(menu_selected_item == 4) menu_selected_item = 0;
 		  break;
 	  case 0x0D:
 		  // set signal according to menu item
-	  default:
-		  continue;
 	  }
 
 	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
@@ -631,10 +638,10 @@ void setting_t(void const * argument)
 	static char pointer = '-';
 	  for(;;)
 	  {
-		  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+		  osSignalWait(0, osWaitForever);
 
 		  if(setting_state == CHOOSING) {
-			  switch(os_signal_event.value.v) {
+			  switch(tsignals[SETTING]) {
 			  case 0x02:
 				  setting_selected_item += 1;
 				  if(setting_selected_item == 4) setting_selected_item = 0;
@@ -651,7 +658,7 @@ void setting_t(void const * argument)
 				  continue;
 			  }
 		  } else if(setting_state == CHANGING) {
-			  switch(os_signal_event.value.v) {
+			  switch(tsignals[SETTING]) {
 			  case 0x02:
 				  switch (setting_selected_item) {
 					case 0:
