@@ -83,10 +83,21 @@ void about_t(void const * argument);
 
 
 
+enum ChooseState {
+	CHOOSING,
+	CHANGING,
+
+};
 
 uint8_t tsignals[NTHREADS];
-
 uint8_t game_state = 0;
+uint8_t initial_health = 5;
+uint8_t initial_speed = 1;
+uint8_t sound_state = 0;
+uint8_t blocks_number = 3;
+uint8_t selected_mode = 1;
+char player_name[6] = "pouria";
+
 
 /* USER CODE END 0 */
 
@@ -623,10 +634,85 @@ void setting_t(void const * argument)
 {
   /* USER CODE BEGIN setting_t */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	static uint8_t setting_selected_item = 0;
+	static uint8_t setting_state = CHOOSING;
+	static char pointer = '-';
+	  for(;;)
+	  {
+		  osSignalWait(0, osWaitForever);
+
+		  if(setting_state == CHOOSING) {
+			  switch(tsignals[SETTING]) {
+			  case 0x02:
+				  setting_selected_item += 1;
+				  if(setting_selected_item == 4) setting_selected_item = 0;
+				  break;
+			  case 0x0A:
+				  if(setting_selected_item == 0) setting_selected_item = 4;
+				  setting_selected_item -= 1;
+				  break;
+			  case 0x0D:
+				  setting_state = CHANGING;
+				  pointer = '>';
+				  break;
+			  default:
+				  continue;
+			  }
+		  } else if(setting_state == CHANGING) {
+			  switch(tsignals[SETTING]) {
+			  case 0x02:
+				  switch (setting_selected_item) {
+					case 0:
+						initial_health += 1;
+						initial_health <= 10 ? : initial_health = 10;
+						break;
+					case 1:
+						initial_speed += 1;
+						initial_speed <= 10 ? : initial_speed = 10;
+						break;
+					case 2:
+						sound_state ? sound_state = 0 : sound_state = 1;
+						break;
+					case 3:
+						blocks_number += 1;
+						blocks_number <= 6 ? : blocks_number = 6;
+						break;
+				}
+				  break;
+			  case 0x0A:
+				  switch (setting_selected_item) {
+					case 0:
+						initial_health -= 1;
+						initial_health >= 0 ? : initial_health = 0;
+						break;
+					case 1:
+						initial_speed -= 1;
+						initial_speed >= 0 ? : initial_speed = 0;
+						break;
+					case 2:
+						sound_state ? sound_state = 0 : sound_state = 1;
+						break;
+					case 3:
+						blocks_number -= 1;
+						blocks_number >= 0 ? : blocks_number = 0;
+						break;
+				  }
+				  break;
+			  case 0x0D:
+				  setting_state = CHOOSING;
+				  pointer = '-';
+				  break;
+			  }
+		  }
+
+
+		  char str[20];
+		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
+		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
+		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
+		  setCursor(0, 3); sprintf(str, "%cBLOCKS : %d         ", setting_selected_item == 3 ? pointer : ' ', blocks_number); print(str);
+	  }
+	  osThreadTerminate(NULL);
   /* USER CODE END setting_t */
 }
 
@@ -641,10 +727,33 @@ void mode_t(void const * argument)
 {
   /* USER CODE BEGIN mode_t */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	static uint8_t mode_selected_item = 0;
+	  for(;;)
+	  {
+		  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+
+		  switch(os_signal_event.value.v) {
+			  case 0x02:
+				  mode_selected_item += 1;
+				  if(mode_selected_item == 3) mode_selected_item = 0;
+				  break;
+			  case 0x0A:
+				  if(mode_selected_item == 0) mode_selected_item = 3;
+				  mode_selected_item -= 1;
+				  break;
+			  case 0x0D:
+				  selected_mode = mode_selected_item;
+
+				  break;
+			  default:
+				  continue;
+		  }
+
+		  setCursor(0, 0); print(mode_selected_item == 0 ? (selected_mode == 0 ? ">" : "-") : " "); print("MODE1: dnt tch urslf");
+		  setCursor(0, 1); print(mode_selected_item == 1 ? (selected_mode == 1 ? ">" : "-") : " "); print("MODE2: dnt tch walls");
+		  setCursor(0, 2); print(mode_selected_item == 2 ? (selected_mode == 2 ? ">" : "-") : " "); print("MODE3: spd is incrsg");
+	  }
+	  osThreadTerminate(NULL);
   /* USER CODE END mode_t */
 }
 
@@ -659,9 +768,16 @@ void about_t(void const * argument)
 {
   /* USER CODE BEGIN about_t */
   /* Infinite loop */
+	static uint8_t second = 0;
+	static char str[5] = "00:00";
   for(;;)
   {
-    osDelay(1);
+	  ++second;
+	  setCursor(0, 0); print("Developed By:");
+	  setCursor(0, 1); print("S.Pouria Hosseini");
+	  setCursor(0, 2); print("M.Amin Hatefi");
+	  setCursor(0, 3); sprintf(str, "%d:%d", second, second); print(str);
+	  osDelay(1000);
   }
   /* USER CODE END about_t */
 }
