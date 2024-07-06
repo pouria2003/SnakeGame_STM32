@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "LiquidCrystal.h"
+#include "customChars.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -108,6 +109,8 @@ int main(void)
 
 	LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);
 	begin(20, 4);
+	createChar(0, full_black);
+
 
 
   /* USER CODE END 2 */
@@ -402,19 +405,23 @@ void introPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-<<<<<<< HEAD
-	 osDelay(1);
-
-=======
 	  setCursor(0, 0);
-	  print("██  ████          ██");
-	  print("█  █ ██ █  SNAKE   █");
-	  print("█   ████   GAME!   █");
-	  print("██   ██           ██");
->>>>>>> 451cad21f3dbcd05b4a3d122382481fd95c02573
+	  char str[21] = "                    ";
+	  str[0] = str[1] = str[4] = str[5] = str[6] = str[7] = str[18] = str[19] = 255;
+	  str[20] = "\0";
+
+
+//
+	  print(str);
+	  print("a a");
+//	  print("   █ ██ █  SNAKE   █");
+//	  print("█   ████   GAME!   █");
+//	  print("██   ██           ██");
+	  osDelay(100000);
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
+
 }
 
 /* USER CODE BEGIN Header_menuPage_t */
@@ -430,11 +437,12 @@ void menuPage_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+	  osDelay(100000);
+
 	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
 	  setCursor(0, 1); print(menu_selected_item == 1 ? "-" : " "); print("SETTING");
 	  setCursor(0, 2); print(menu_selected_item == 2 ? "-" : " "); print("MODE");
 	  setCursor(0, 3); print(menu_selected_item == 3 ? "-" : " "); print("ABOUT");
-	  osDelay(100000);
   }
   /* USER CODE END menuPage_t */
 }
