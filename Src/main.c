@@ -409,14 +409,26 @@ void introPage_t(void const * argument)
 	  char str[21] = "                    ";
 	  str[0] = str[1] = str[4] = str[5] = str[6] = str[7] = str[18] = str[19] = 255;
 	  str[20] = "\0";
-
-
-//
 	  print(str);
-	  print("a a");
-//	  print("   █ ██ █  SNAKE   █");
-//	  print("█   ████   GAME!   █");
-//	  print("██   ██           ██");
+
+	  setCursor(0, 1);
+	  str = "           SNAKE    ";
+	  str[0] = str[3] = str[5] = str[6] = str[8] = str[19] = 255;
+	  str[20] = "\0";
+	  print(str);
+
+	  setCursor(0, 2);
+	  str = "           GAME!    ";
+	  str[0] = str[4] = str[5] = str[6] = str[7] = str[19] = 255;
+	  str[20] = "\0";
+	  print(str);
+
+	  setCursor(0, 3);
+	  str = "                    ";
+	  str[0] = str[1] = str[5] = str[6] = str[18] = str[19] = 255;
+	  str[20] = "\0";
+	  print(str);
+
 	  osDelay(100000);
   }
   osThreadTerminate(NULL);
