@@ -582,6 +582,7 @@ void menuPage_t(void const * argument)
 		  break;
 	  case 0x0D:
 		  // set signal according to menu item
+		  break;
 	  }
 
 	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
