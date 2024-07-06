@@ -9,10 +9,38 @@
 #include "callbacksAndFunctions.h"
 #include "main.h"
 
+
+enum GameState {
+	INTRO,
+	MENU,
+
+};
+
+#define NTHREADS 6
+
 extern uint8_t game_state;
 
+extern osThreadId MenuPageHandle;
+
+extern enum Threads;
+
+extern uint8_t tsignals[NTHREADS];
 
 
+void flowHandler(uint8_t keypad_button_number) {
+	switch(game_state) {
+
+	  case INTRO:
+		  osSignalSet(MenuPageHandle, 0x00);
+		  tsignals[MENU_PAGE] = 0;
+		  game_state = MENU;
+		  break;
+	  case MENU:
+		  osSignalSet(MenuPageHandle, keypad_button_number);
+		  tsignals[MENU_PAGE] = keypad_button_number;
+		  break;
+	  }
+}
 
 
 // Input pull down rising edge trigger interrupt pins:
@@ -85,7 +113,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   // +----+----+----+----+
   const uint8_t button_number = row_number * 4 + column_number + 1;
 
-//  switch()
+
+  flowHandler(button_number);
 
   switch (button_number)
   {
