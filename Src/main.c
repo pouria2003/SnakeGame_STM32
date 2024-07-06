@@ -52,7 +52,6 @@ osThreadId IntroPageHandle;
 osThreadId MenuPageHandle;
 /* USER CODE BEGIN PV */
 
-uint8_t menu_selected_item = 0;
 
 /* USER CODE END PV */
 
@@ -435,15 +434,29 @@ void menuPage_t(void const * argument)
 {
   /* USER CODE BEGIN menuPage_t */
   /* Infinite loop */
+
+  static uint8_t menu_selected_item = 0;
   for(;;)
   {
-	  osDelay(100000);
+	  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+
+	  switch(os_signal_event) {
+	  case 0x06:
+		  menu_selected_item += 1;
+		  break;
+	  case 0x0E:
+
+	  case 0x0D:
+
+	  default:
+	  }
 
 	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
 	  setCursor(0, 1); print(menu_selected_item == 1 ? "-" : " "); print("SETTING");
 	  setCursor(0, 2); print(menu_selected_item == 2 ? "-" : " "); print("MODE");
 	  setCursor(0, 3); print(menu_selected_item == 3 ? "-" : " "); print("ABOUT");
   }
+  osThreadTerminate(NULL);
   /* USER CODE END menuPage_t */
 }
 
