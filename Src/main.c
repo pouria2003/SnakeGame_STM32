@@ -86,7 +86,18 @@ enum GameState {
 
 };
 
+enum ChooseState {
+	CHOOSING,
+	CHANGING,
+
+};
+
 uint8_t game_state = INTRO;
+uint8_t initial_health = 5;
+uint8_t initial_speed = 1;
+uint8_t sound_state = 0;
+uint8_t blocks_number = 3;
+char player_name[6] = "pouria";
 
 /* USER CODE END 0 */
 
@@ -614,10 +625,85 @@ void setting_t(void const * argument)
 {
   /* USER CODE BEGIN setting_t */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	static uint8_t setting_selected_item = 0;
+	static uint8_t setting_state = CHOOSING;
+	static char pointer = '-';
+	  for(;;)
+	  {
+		  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+
+		  if(setting_state == CHOOSING) {
+			  switch(os_signal_event.value.v) {
+			  case 0x02:
+				  setting_selected_item += 1;
+				  if(setting_selected_item == 4) setting_selected_item = 0;
+				  break;
+			  case 0x0A:
+				  if(setting_selected_item == 0) setting_selected_item = 4;
+				  setting_selected_item -= 1;
+				  break;
+			  case 0x0D:
+				  setting_state = CHANGING;
+				  pointer = '>';
+				  break;
+			  default:
+				  continue;
+			  }
+		  } else if(setting_state == CHANGING) {
+			  switch(os_signal_event.value.v) {
+			  case 0x02:
+				  switch (setting_selected_item) {
+					case 0:
+						initial_health += 1;
+						initial_health <= 10 ? : initial_health = 10;
+						break;
+					case 1:
+						initial_speed += 1;
+						initial_speed <= 10 ? : initial_speed = 10;
+						break;
+					case 2:
+						sound_state ? sound_state = 0 : sound_state = 1;
+						break;
+					case 3:
+						blocks_number += 1;
+						blocks_number <= 6 ? : blocks_number = 6;
+						break;
+				}
+				  break;
+			  case 0x0A:
+				  switch (setting_selected_item) {
+					case 0:
+						initial_health -= 1;
+						initial_health >= 0 ? : initial_health = 0;
+						break;
+					case 1:
+						initial_speed -= 1;
+						initial_speed >= 0 ? : initial_speed = 0;
+						break;
+					case 2:
+						sound_state ? sound_state = 0 : sound_state = 1;
+						break;
+					case 3:
+						blocks_number -= 1;
+						blocks_number >= 0 ? : blocks_number = 0;
+						break;
+				  }
+				  break;
+			  case 0x0D:
+				  setting_state = CHOOSING;
+				  pointer = '-';
+				  break;
+			  }
+		  }
+
+
+		  char str[20];
+		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
+		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
+		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
+		  setCursor(0, 3); sprintf(str, "%cBLOCKS : %d         ", setting_selected_item == 3 ? pointer : ' ', blocks_number); print(str);
+	  }
+	  osThreadTerminate(NULL);
   /* USER CODE END setting_t */
 }
 
