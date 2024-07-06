@@ -19,8 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "LiquidCrystal.h"
-#include "customChars.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -44,12 +42,18 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 
 PCD_HandleTypeDef hpcd_USB_FS;
 
 osThreadId IntroPageHandle;
 osThreadId MenuPageHandle;
+osThreadId startHandle;
+osThreadId settingHandle;
+osThreadId modeHandle;
+osThreadId aboutHandle;
 /* USER CODE BEGIN PV */
 
 
@@ -61,8 +65,13 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USB_PCD_Init(void);
+static void MX_RTC_Init(void);
 void introPage_t(void const * argument);
 void menuPage_t(void const * argument);
+void start_t(void const * argument);
+void setting_t(void const * argument);
+void mode_t(void const * argument);
+void about_t(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -70,6 +79,14 @@ void menuPage_t(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+enum GameState {
+	INTRO,
+	MENU,
+
+};
+
+uint8_t game_state = INTRO;
 
 /* USER CODE END 0 */
 
@@ -80,6 +97,11 @@ void menuPage_t(void const * argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, 1);
 
   /* USER CODE END 1 */
 
@@ -104,11 +126,11 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_USB_PCD_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
 
 	LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);
 	begin(20, 4);
-	createChar(0, full_black);
 
 
 
@@ -138,6 +160,22 @@ int main(void)
   /* definition and creation of MenuPage */
   osThreadDef(MenuPage, menuPage_t, osPriorityNormal, 0, 128);
   MenuPageHandle = osThreadCreate(osThread(MenuPage), NULL);
+
+  /* definition and creation of start */
+  osThreadDef(start, start_t, osPriorityIdle, 0, 128);
+  startHandle = osThreadCreate(osThread(start), NULL);
+
+  /* definition and creation of setting */
+  osThreadDef(setting, setting_t, osPriorityIdle, 0, 128);
+  settingHandle = osThreadCreate(osThread(setting), NULL);
+
+  /* definition and creation of mode */
+  osThreadDef(mode, mode_t, osPriorityIdle, 0, 128);
+  modeHandle = osThreadCreate(osThread(mode), NULL);
+
+  /* definition and creation of about */
+  osThreadDef(about, about_t, osPriorityIdle, 0, 128);
+  aboutHandle = osThreadCreate(osThread(about), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -171,11 +209,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
+                              |RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6;
@@ -197,8 +237,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_RTC;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
   PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
@@ -251,6 +293,41 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+  hrtc.Init.AsynchPrediv = 127;
+  hrtc.Init.SynchPrediv = 255;
+  hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+  hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
@@ -351,6 +428,12 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
                           |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : DRDY_Pin MEMS_INT3_Pin MEMS_INT4_Pin MEMS_INT1_Pin
                            MEMS_INT2_Pin */
   GPIO_InitStruct.Pin = DRDY_Pin|MEMS_INT3_Pin|MEMS_INT4_Pin|MEMS_INT1_Pin
@@ -385,6 +468,39 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC6 PC7 PC8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA8 PA9 PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -407,32 +523,27 @@ void introPage_t(void const * argument)
 	  setCursor(0, 0);
 	  char str[21] = "                    ";
 	  str[0] = str[1] = str[4] = str[5] = str[6] = str[7] = str[18] = str[19] = 255;
-	  str[20] = "\0";
 	  print(str);
 
 	  setCursor(0, 1);
-	  str = "           SNAKE    ";
+	  strcpy(str, "           SNAKE    ");
 	  str[0] = str[3] = str[5] = str[6] = str[8] = str[19] = 255;
-	  str[20] = "\0";
 	  print(str);
 
 	  setCursor(0, 2);
-	  str = "           GAME!    ";
+	  strcpy(str, "           GAME!    ");
 	  str[0] = str[4] = str[5] = str[6] = str[7] = str[19] = 255;
-	  str[20] = "\0";
 	  print(str);
 
 	  setCursor(0, 3);
-	  str = "                    ";
+	  strcpy(str, "                    ");
 	  str[0] = str[1] = str[5] = str[6] = str[18] = str[19] = 255;
-	  str[20] = "\0";
 	  print(str);
 
 	  osDelay(100000);
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
-
 }
 
 /* USER CODE BEGIN Header_menuPage_t */
@@ -452,15 +563,17 @@ void menuPage_t(void const * argument)
   {
 	  osEvent os_signal_event = osSignalWait(0, osWaitForever);
 
-	  switch(os_signal_event) {
-	  case 0x06:
+	  switch(os_signal_event.value.v) {
+	  case 0x02:
 		  menu_selected_item += 1;
 		  break;
-	  case 0x0E:
-
+	  case 0x0A:
+		  menu_selected_item -= 1;
+		  break;
 	  case 0x0D:
-
+		  // set signal according to menu item
 	  default:
+		  continue;
 	  }
 
 	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
@@ -470,6 +583,78 @@ void menuPage_t(void const * argument)
   }
   osThreadTerminate(NULL);
   /* USER CODE END menuPage_t */
+}
+
+/* USER CODE BEGIN Header_start_t */
+/**
+* @brief Function implementing the start thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_start_t */
+void start_t(void const * argument)
+{
+  /* USER CODE BEGIN start_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END start_t */
+}
+
+/* USER CODE BEGIN Header_setting_t */
+/**
+* @brief Function implementing the setting thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_setting_t */
+void setting_t(void const * argument)
+{
+  /* USER CODE BEGIN setting_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END setting_t */
+}
+
+/* USER CODE BEGIN Header_mode_t */
+/**
+* @brief Function implementing the mode thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_mode_t */
+void mode_t(void const * argument)
+{
+  /* USER CODE BEGIN mode_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END mode_t */
+}
+
+/* USER CODE BEGIN Header_about_t */
+/**
+* @brief Function implementing the about thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_about_t */
+void about_t(void const * argument)
+{
+  /* USER CODE BEGIN about_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END about_t */
 }
 
 /**
