@@ -12,18 +12,16 @@
 #include "cmsis_os.h"
 #include <malloc.h>
 
-enum GameState {
-	INTRO,
-	MENU,
-
-};
 
 #define NTHREADS 6
 
 extern uint8_t game_state;
 
 extern osThreadId MenuPageHandle;
-
+extern osThreadId startHandle;
+extern osThreadId settingHandle;
+extern osThreadId modeHandle;
+extern osThreadId aboutHandle;
 extern enum Threads;
 
 extern uint8_t tsignals[NTHREADS];
@@ -32,31 +30,44 @@ Snake snake = {NULL};
 
 uint8_t direction = RIGHT;
 
-void flowHandler(uint8_t keypad_button_number, uint8_t menu_item_selected) {
+void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	switch(game_state) {
+	case INTRO:
+		tsignals[INTRO_T] = 0;
+		game_state = MENU;
+		osSignalSet(MenuPageHandle, 0);
+		break;
+	case MENU:
+		tsignals[MENU_T] = keypad_button_number;
+		osSignalSet(MenuPageHandle, 0);
+		break;
+	case START:
+		//to do
+		break;
+	case SETTING:
+		tsignals[SETTING_T] = keypad_button_number;
+		osSignalSet(settingHandle, 0);
+		break;
+	case MODE:
+		tsignals[MODE_T] = keypad_button_number;
+		osSignalSet(modeHandle, 0);
+	case ABOUT:
+		tsignals[ABOUT_T] = keypad_button_number;
+//		osSignalSet(aboutHandle, 0);
+	}
 
-	  case INTRO:
-		  osSignalSet(MenuPageHandle, 0x00);
-		  tsignals[MENU_PAGE] = 0;
-		  game_state = MENU;
-		  break;
-	  case MENU:
-		  osSignalSet(MenuPageHandle, keypad_button_number);
-		  tsignals[MENU_PAGE] = keypad_button_number;
-		  break;
-	  }
 }
 
 void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char)
 {
 	Node *new_node = (Node *)malloc(sizeof(Node));
-	new_node->next = snake.snake_body;
+	new_node->next = snake.snake_tail;
 	new_node->col = col;
 	new_node->row = row;
 	new_node->custom_char_ind = custom_char;
-	if(snake->snake_head == NULL)
-		snakeHead = new_node;
-	snake.snake_body = new_node;
+	if(snake.snake_head == NULL)
+		snake.snake_head = new_node;
+	snake.snake_tail = new_node;
 }
 
 void initialGame()
@@ -69,7 +80,7 @@ void initialGame()
 
 
 void moveSnake() {
-	Node* current_node = snake.snake_body;
+	Node* current_node = snake.snake_tail;
 	while(current_node->next != NULL) {
 		// clear one node of snake body
 		setCursor(current_node->col, current_node->row);
@@ -81,12 +92,12 @@ void moveSnake() {
 		write(current_node->custom_char_ind);
 		current_node = current_node->next;
 	}
-	switch(direction) {
-	case UP:
-	case RIGHT:
-	case DOWN:
-	case LEFT:
-	}
+//	switch(direction) {
+//	case UP:
+//	case RIGHT:
+//	case DOWN:
+//	case LEFT:
+//	}
 }
 
 
