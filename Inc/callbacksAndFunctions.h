@@ -10,14 +10,31 @@
 
 #include "main.h"
 
-enum Threads{
-	INTRO_PAGE = 0,
-	MENU_PAGE,
+enum GameState {
+	INTRO,
+	MENU,
 	START,
 	SETTING,
 	MODE,
 	ABOUT
 };
+
+enum Threads{
+	INTRO_T = 0,
+	MENU_T,
+	START_T,
+	SETTING_T,
+	MODE_T,
+	ABOUT_T
+};
+
+
+enum ChooseState {
+	CHOOSING,
+	CHANGING,
+
+};
+
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 

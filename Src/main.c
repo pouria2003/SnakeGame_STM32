@@ -83,12 +83,6 @@ void about_t(void const * argument);
 
 
 
-enum ChooseState {
-	CHOOSING,
-	CHANGING,
-
-};
-
 uint8_t tsignals[NTHREADS];
 uint8_t game_state = 0;
 uint8_t initial_health = 5;
@@ -165,7 +159,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IntroPage */
-  osThreadDef(IntroPage, introPage_t, osPriorityNormal, 0, 128);
+  osThreadDef(IntroPage, introPage_t, osPriorityAboveNormal, 0, 128);
   IntroPageHandle = osThreadCreate(osThread(IntroPage), NULL);
 
   /* definition and creation of MenuPage */
@@ -532,29 +526,51 @@ void introPage_t(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
+
+  setCursor(0, 0);
+  char str[21] = "                    ";
+  str[0] = str[1] = str[4] = str[5] = str[6] = str[7] = str[18] = str[19] = 255;
+  print(str);
+
+  setCursor(0, 1);
+  strcpy(str, "           SNAKE    ");
+  str[0] = str[3] = str[5] = str[6] = str[8] = str[19] = 255;
+  print(str);
+
+  setCursor(0, 2);
+  strcpy(str, "           GAME!    ");
+  str[0] = str[4] = str[5] = str[6] = str[7] = str[19] = 255;
+  print(str);
+
+  setCursor(0, 3);
+  strcpy(str, "                    ");
+  str[0] = str[1] = str[5] = str[6] = str[18] = str[19] = 255;
+  print(str);
+
+  str[0] = 255;
+  str[1] = str[20];
   for(;;)
   {
-	  setCursor(0, 0);
-	  char str[21] = "                    ";
-	  str[0] = str[1] = str[4] = str[5] = str[6] = str[7] = str[18] = str[19] = 255;
-	  print(str);
 
-	  setCursor(0, 1);
-	  strcpy(str, "           SNAKE    ");
-	  str[0] = str[3] = str[5] = str[6] = str[8] = str[19] = 255;
-	  print(str);
 
-	  setCursor(0, 2);
-	  strcpy(str, "           GAME!    ");
-	  str[0] = str[4] = str[5] = str[6] = str[7] = str[19] = 255;
-	  print(str);
+	  setCursor(0,  0); print(" "); setCursor(0,  0); print(str);
+	  setCursor(1,  0); print(" "); setCursor(1,  0); print(str);
+	  setCursor(18, 0); print(" "); setCursor(18, 0); print(str);
+	  setCursor(19, 0); print(" "); setCursor(19, 0); print(str);
+	  setCursor(0,  1); print(" "); setCursor(0,  1); print(str);
+	  setCursor(19, 1); print(" "); setCursor(19, 1); print(str);
+	  setCursor(0,  2); print(" "); setCursor(0,  2); print(str);
+	  setCursor(19, 2); print(" "); setCursor(19, 2); print(str);
+	  setCursor(0,  3); print(" "); setCursor(0,  3); print(str);
+	  setCursor(1,  3); print(" "); setCursor(1,  3); print(str);
+	  setCursor(18, 3); print(" "); setCursor(18, 3); print(str);
+	  setCursor(19, 3); print(" "); setCursor(19, 3); print(str);
+	  setCursor(4,  1); print("#"); setCursor(7,  1); print("#"); osDelay(100);
+	  setCursor(4,  1); print(" "); setCursor(7,  1); print(" ");
 
-	  setCursor(0, 3);
-	  strcpy(str, "                    ");
-	  str[0] = str[1] = str[5] = str[6] = str[18] = str[19] = 255;
-	  print(str);
-
-	  break;
+	  if(game_state != INTRO) {
+	  		  break;
+	  }
   }
   osThreadTerminate(NULL);
   /* USER CODE END 5 */
@@ -577,29 +593,38 @@ void menuPage_t(void const * argument)
   {
 	  osSignalWait(0, osWaitForever);
 
-	  clear();
 
-	  switch(tsignals[MENU_PAGE]) {
-	  case 0x00:
+	  switch(tsignals[MENU_T]) {
+	  case 0:
+		  osDelay(500);
+		  clear();
 		  menu_selected_item = 0;
+		  setCursor(0, 0); print("-START");
+		  setCursor(1, 1); print("SETTING");
+		  setCursor(1, 2); print("MODE");
+		  setCursor(1, 3); print("ABOUT");
 		  break;
-	  case 0x02:
+	  case 2:
+		  setCursor(0, menu_selected_item); print(" ");
 		  if(menu_selected_item == 0) menu_selected_item = 4;
 		  menu_selected_item -= 1;
+		  setCursor(0, menu_selected_item); print("-");
 		  break;
-	  case 0x0A:
+	  case 10:
+		  setCursor(0, menu_selected_item); print(" ");
 		  menu_selected_item += 1;
 		  if(menu_selected_item == 4) menu_selected_item = 0;
+		  setCursor(0, menu_selected_item); print("-");
 		  break;
-	  case 0x0D:
+	  case 6:
 		  // set signal according to menu item
+		   menu_selected_item == 0 ? game_state = START,   osSignalSet(startHandle, 0) :
+		  (menu_selected_item == 1 ? game_state = SETTING, osSignalSet(settingHandle, 0) :
+		  (menu_selected_item == 2 ? game_state = MODE,    osSignalSet(modeHandle, 0) :
+		  (menu_selected_item == 3 ? game_state = ABOUT, osSignalSet(aboutHandle, 0) : NULL)));
 		  break;
 	  }
 
-	  setCursor(0, 0); print(menu_selected_item == 0 ? "-" : " "); print("START");
-	  setCursor(0, 1); print(menu_selected_item == 1 ? "-" : " "); print("SETTING");
-	  setCursor(0, 2); print(menu_selected_item == 2 ? "-" : " "); print("MODE");
-	  setCursor(0, 3); print(menu_selected_item == 3 ? "-" : " "); print("ABOUT");
   }
   osThreadTerminate(NULL);
   /* USER CODE END menuPage_t */
@@ -636,82 +661,110 @@ void setting_t(void const * argument)
   /* Infinite loop */
 	static uint8_t setting_selected_item = 0;
 	static uint8_t setting_state = CHOOSING;
-	static char pointer = '-';
+	static char str[20];
 	  for(;;)
 	  {
 		  osSignalWait(0, osWaitForever);
 
 		  if(setting_state == CHOOSING) {
-			  switch(tsignals[SETTING]) {
-			  case 0x02:
+			  switch(tsignals[SETTING_T]) {
+			  case 0:
+				  //first time comming
+				  clear();
+				  setCursor(0, 0); sprintf(str, "-HEALTH : %d         ", initial_health); print(str);
+				  setCursor(0, 1); sprintf(str, " SPEED  : %d         ", initial_speed); print(str);
+				  setCursor(0, 2); sprintf(str, " SOUNDS : %s       ", sound_state ? "on " : "off"); print(str);
+				  setCursor(0, 3); sprintf(str, " BLOCKS : %d         ", blocks_number); print(str);
+				  break;
+			  case 10:
+				  setCursor(0, setting_selected_item); print(" ");
 				  setting_selected_item += 1;
 				  if(setting_selected_item == 4) setting_selected_item = 0;
+				  setCursor(0, setting_selected_item); print("-");
 				  break;
-			  case 0x0A:
+			  case 2:
+				  setCursor(0, setting_selected_item); print(" ");
 				  if(setting_selected_item == 0) setting_selected_item = 4;
 				  setting_selected_item -= 1;
+				  setCursor(0, setting_selected_item); print("-");
 				  break;
-			  case 0x0D:
+			  case 6:
+				  setCursor(0, setting_selected_item); print(" ");
 				  setting_state = CHANGING;
-				  pointer = '>';
+				  setCursor(0, setting_selected_item); print(">");
 				  break;
-			  default:
-				  continue;
+			  case 5:
+				  tsignals[MENU_T] = 0;
+				  tsignals[SETTING_T] = 0;
+				  game_state = MENU;
+				  osSignalSet(MenuPageHandle, 0);
+				  break;
+
 			  }
 		  } else if(setting_state == CHANGING) {
 			  switch(tsignals[SETTING]) {
-			  case 0x02:
+			  case 2:
 				  switch (setting_selected_item) {
 					case 0:
 						initial_health += 1;
-						initial_health <= 10 ? : initial_health = 10;
+						if(initial_health > 9) initial_health = 9;
+						setCursor(10, 0); sprintf(str, "%d", initial_health); print(str);
 						break;
 					case 1:
 						initial_speed += 1;
-						initial_speed <= 10 ? : initial_speed = 10;
+						if(initial_speed > 9) initial_speed = 9;
+						setCursor(10, 1); sprintf(str, "%d", initial_speed); print(str);
 						break;
 					case 2:
-						sound_state ? sound_state = 0 : sound_state = 1;
+						sound_state = sound_state ? 0 : 1;
+						setCursor(10, 2); print(sound_state ? "on " : "off");
 						break;
 					case 3:
 						blocks_number += 1;
-						blocks_number <= 6 ? : blocks_number = 6;
+						if(blocks_number > 6) blocks_number = 6;
+						setCursor(10, 3); sprintf(str, "%d", blocks_number); print(str);
 						break;
 				}
 				  break;
-			  case 0x0A:
+			  case 10:
 				  switch (setting_selected_item) {
 					case 0:
+						if(initial_health == 0) initial_health = 1;
 						initial_health -= 1;
-						initial_health >= 0 ? : initial_health = 0;
+						setCursor(10, 0); sprintf(str, "%d", initial_health); print(str);
 						break;
 					case 1:
+						if(initial_speed == 0) initial_speed = 1;
 						initial_speed -= 1;
-						initial_speed >= 0 ? : initial_speed = 0;
+						setCursor(10, 1); sprintf(str, "%d", initial_speed); print(str);
 						break;
 					case 2:
-						sound_state ? sound_state = 0 : sound_state = 1;
-						break;
+						sound_state = sound_state ? 0 : 1;
+						setCursor(10, 2); print(sound_state ? "on " : "off");
 					case 3:
+						if(blocks_number == 0) blocks_number = 1;
 						blocks_number -= 1;
-						blocks_number >= 0 ? : blocks_number = 0;
+						setCursor(10, 3); sprintf(str, "%d", blocks_number); print(str);
 						break;
 				  }
 				  break;
-			  case 0x0D:
+			  case 6:
+				  setCursor(0, setting_selected_item); print(" ");
 				  setting_state = CHOOSING;
-				  pointer = '-';
+				  setCursor(0, setting_selected_item); print("-");
+				  break;
+			  case 5:
+				  game_state = MENU;
+				  tsignals[MENU_T] = 0;
+				  tsignals[SETTING_T] = 0;
 				  break;
 			  }
 		  }
 
 
-		  char str[20];
+
 		  //player name
-		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
-		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
-		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
-		  setCursor(0, 3); sprintf(str, "%cBLOCKS : %d         ", setting_selected_item == 3 ? pointer : ' ', blocks_number); print(str);
+
 	  }
 	  osThreadTerminate(NULL);
   /* USER CODE END setting_t */
@@ -728,32 +781,45 @@ void mode_t(void const * argument)
 {
   /* USER CODE BEGIN mode_t */
   /* Infinite loop */
+
 	static uint8_t mode_selected_item = 0;
-	setCursor(0, 3); print("-^-^-^-^-^-^-^-^-^-^");
+
 	  for(;;)
 	  {
 		  osSignalWait(0, osWaitForever);
 
-		  switch(os_signal_event.value.v) {
-			  case 0x02:
-				  mode_selected_item += 1;
-				  if(mode_selected_item == 3) mode_selected_item = 0;
-				  break;
-			  case 0x0A:
-				  if(mode_selected_item == 0) mode_selected_item = 3;
-				  mode_selected_item -= 1;
-				  break;
-			  case 0x0D:
-				  selected_mode = mode_selected_item;
-
-				  break;
-			  default:
-				  continue;
+		  switch(tsignals[MODE_T]) {
+		  case 0:
+			  clear();
+			  setCursor(0, 0); print(selected_mode == 0 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE1:dnt tch urslf");
+			  setCursor(0, 1); print(selected_mode == 1 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE2:dnt tch walls");
+			  setCursor(0, 2); print(selected_mode == 2 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE3:spd is incrsg");
+			  setCursor(0, 3); print("-^-^-^-^-^-^-^-^-^-^");
+			  break;
+		  case 10:
+			  setCursor(0, mode_selected_item); print(" ");
+			  mode_selected_item += 1;
+			  if(mode_selected_item == 3) mode_selected_item = 0;
+			  setCursor(0, mode_selected_item); print(selected_mode == mode_selected_item ? ">" : "-");
+			  break;
+		  case 2:
+			  setCursor(0, mode_selected_item); print(" ");
+			  if(mode_selected_item == 0) mode_selected_item = 3;
+			  mode_selected_item -= 1;
+			  setCursor(0, mode_selected_item); print(selected_mode == mode_selected_item ? ">" : "-");
+			  break;
+		  case 6:
+			  setCursor(0, selected_mode); print(" ");
+			  selected_mode = mode_selected_item;
+			  setCursor(0, selected_mode); print(">");
+			  break;
+		  case 5:
+			  game_state = MENU;
+			  tsignals[MENU_T] = 0;
+			  tsignals[MODE_T] = 0;
+			  osSignalSet(MenuPageHandle, 0);
+			  break;
 		  }
-
-		  setCursor(0, 0); print(selected_mode == 0 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE1: dnt tch urslf");
-		  setCursor(0, 1); print(selected_mode == 1 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE2: dnt tch walls");
-		  setCursor(0, 2); print(selected_mode == 2 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE3: spd is incrsg");
 	  }
 	  osThreadTerminate(NULL);
   /* USER CODE END mode_t */
@@ -772,16 +838,26 @@ void about_t(void const * argument)
   /* Infinite loop */
 	static uint8_t second = 0;
 	static char str[5] = "00:00";
-  osSignalWait(0, osWaitForever);
+	osSignalWait(0, osWaitForever);
   for(;;)
   {
+	  switch (tsignals[ABOUT_T]) {
+		case 0:
+			setCursor(0, 0); print("Developed By:       ");
+			setCursor(0, 1); print("S.Pouria Hosseini   ");
+			setCursor(0, 2); print("M.Amin   Hatefi   ");
+			setCursor(0, 3); sprintf(str, "%d:%d   ", second % 60, second); print(str);
+			++second;
+			break;
+		case 5:
+			game_state = MENU;
+		    tsignals[MENU_T] = 0;
+		    tsignals[ABOUT_T] = 0;
+		    osSignalSet(MenuPageHandle, 0);
+		    osSignalWait(0, osWaitForever);
+			break;
+	}
 
-	  ++second;
-	  setCursor(0, 0); print("Developed By:");
-	  setCursor(0, 1); print("S.Pouria Hosseini");
-	  setCursor(0, 2); print("M.Amin Hatefi");
-	  setCursor(0, 3); sprintf(str, "%d:%d", second, second); print(str);
-	  osDelay(1000);
   }
   /* USER CODE END about_t */
 }

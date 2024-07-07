@@ -10,36 +10,47 @@
 #include "main.h"
 
 
-enum GameState {
-	INTRO,
-	MENU,
-
-};
 
 #define NTHREADS 6
 
 extern uint8_t game_state;
 
 extern osThreadId MenuPageHandle;
-
+extern osThreadId startHandle;
+extern osThreadId settingHandle;
+extern osThreadId modeHandle;
+extern osThreadId aboutHandle;
 extern enum Threads;
 
 extern uint8_t tsignals[NTHREADS];
 
 
-void flowHandler(uint8_t keypad_button_number, uint8_t menu_item_selected) {
+void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	switch(game_state) {
+	case INTRO:
+		tsignals[INTRO_T] = 0;
+		game_state = MENU;
+		osSignalSet(MenuPageHandle, 0);
+		break;
+	case MENU:
+		tsignals[MENU_T] = keypad_button_number;
+		osSignalSet(MenuPageHandle, 0);
+		break;
+	case START:
+		//to do
+		break;
+	case SETTING:
+		tsignals[SETTING_T] = keypad_button_number;
+		osSignalSet(settingHandle, 0);
+		break;
+	case MODE:
+		tsignals[MODE_T] = keypad_button_number;
+		osSignalSet(modeHandle, 0);
+	case ABOUT:
+		tsignals[ABOUT_T] = keypad_button_number;
+//		osSignalSet(aboutHandle, 0);
+	}
 
-	  case INTRO:
-		  osSignalSet(MenuPageHandle, 0x00);
-		  tsignals[MENU_PAGE] = 0;
-		  game_state = MENU;
-		  break;
-	  case MENU:
-		  osSignalSet(MenuPageHandle, keypad_button_number);
-		  tsignals[MENU_PAGE] = keypad_button_number;
-		  break;
-	  }
 }
 
 
@@ -116,58 +127,4 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
   flowHandler(button_number, 0);
 
-  switch (button_number)
-  {
-  case 1:
-    /* code */
-    break;
-  case 2:
-    /* code */
-    break;
-  case 3:
-    /* code */
-    break;
-  case 4:
-    /* code */
-    break;
-  case 5:
-    /* code */
-    break;
-  case 6:
-    /* code */
-    break;
-  case 7:
-    /* code */
-    break;
-  case 8:
-    /* code */
-    break;
-  case 9:
-    /* code */
-    break;
-  case 10:
-    /* code */
-    break;
-  case 11:
-    /* code */
-    break;
-  case 12:
-    /* code */
-    break;
-  case 13:
-    /* code */
-    break;
-  case 14:
-    /* code */
-    break;
-  case 15:
-    /* code */
-    break;
-  case 16:
-    /* code */
-    break;
-
-  default:
-    break;
-  }
 }
