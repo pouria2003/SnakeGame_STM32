@@ -153,8 +153,8 @@ int main(void)
 	begin(20, 4);
 //	initialGame();
 //	HAL_Delay(5000);
-	char uart_data[100] = ":D";
-    HAL_UART_Transmit(&huart1, uart_data, 3, HAL_MAX_DELAY);
+//	char uart_data[100] = ":D";
+//    HAL_UART_Transmit(&huart1, uart_data, 3, HAL_MAX_DELAY);
 
   /* USER CODE END 2 */
 
