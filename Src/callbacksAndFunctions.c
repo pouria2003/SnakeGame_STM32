@@ -27,7 +27,7 @@ extern enum Threads;
 extern uint8_t tsignals[NTHREADS];
 
 
-void flowHandler(uint8_t keypad_button_number) {
+void flowHandler(uint8_t keypad_button_number, uint8_t menu_item_selected) {
 	switch(game_state) {
 
 	  case INTRO:
@@ -114,7 +114,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   const uint8_t button_number = row_number * 4 + column_number + 1;
 
 
-  flowHandler(button_number);
+  flowHandler(button_number, 0);
 
   switch (button_number)
   {
