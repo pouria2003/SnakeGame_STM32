@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "callbacksAndFunctions.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -150,8 +151,10 @@ int main(void)
 
 	LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);
 	begin(20, 4);
-
-
+//	initialGame();
+//	HAL_Delay(5000);
+//	char uart_data[100] = ":D";
+//    HAL_UART_Transmit(&huart1, uart_data, 3, HAL_MAX_DELAY);
 
   /* USER CODE END 2 */
 

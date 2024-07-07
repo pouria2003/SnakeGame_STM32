@@ -7,8 +7,10 @@
 
 
 #include "callbacksAndFunctions.h"
+#include "customChars.h"
 #include "main.h"
-
+#include "cmsis_os.h"
+#include <malloc.h>
 
 
 #define NTHREADS 6
@@ -24,6 +26,9 @@ extern enum Threads;
 
 extern uint8_t tsignals[NTHREADS];
 
+Snake snake = {NULL};
+
+uint8_t direction = RIGHT;
 
 void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	switch(game_state) {
@@ -52,6 +57,61 @@ void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	}
 
 }
+
+void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char)
+{
+	Node *new_node = (Node *)malloc(sizeof(Node));
+	new_node->next = snake.snake_tail;
+	new_node->col = col;
+	new_node->row = row;
+	new_node->custom_char_ind = custom_char;
+	if(snake.snake_head == NULL)
+		snake.snake_head = new_node;
+	snake.snake_tail = new_node;
+}
+
+void initialGame()
+{
+	addNodeFront(0, 0, 1);
+	addNodeFront(0, 0, 0);
+
+
+}
+
+
+void moveSnake() {
+	Node* current_node = snake.snake_tail;
+	while(current_node->next != NULL) {
+		// clear one node of snake body
+		setCursor(current_node->col, current_node->row);
+		// updating node
+		current_node->col = current_node->next->col;
+		current_node->row = current_node->next->row;
+		// printing it in new position
+		setCursor(current_node->col, current_node->row);
+		write(current_node->custom_char_ind);
+		current_node = current_node->next;
+	}
+//	switch(direction) {
+//	case UP:
+//	case RIGHT:
+//	case DOWN:
+//	case LEFT:
+//	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Input pull down rising edge trigger interrupt pins:
