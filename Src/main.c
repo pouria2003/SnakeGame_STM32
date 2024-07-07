@@ -69,6 +69,7 @@ osThreadId startHandle;
 osThreadId settingHandle;
 osThreadId modeHandle;
 osThreadId aboutHandle;
+osThreadId MovingSnakeHandle;
 /* USER CODE BEGIN PV */
 
 
@@ -91,6 +92,7 @@ void start_t(void const * argument);
 void setting_t(void const * argument);
 void mode_t(void const * argument);
 void about_t(void const * argument);
+void movingSnake(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -99,6 +101,7 @@ void about_t(void const * argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+extern uint8_t direction;
 
 
 uint8_t tsignals[NTHREADS];
@@ -183,7 +186,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IntroPage */
-  osThreadDef(IntroPage, introPage_t, osPriorityAboveNormal, 0, 128);
+  osThreadDef(IntroPage, introPage_t, osPriorityNormal, 0, 128);
   IntroPageHandle = osThreadCreate(osThread(IntroPage), NULL);
 
   /* definition and creation of MenuPage */
@@ -205,6 +208,10 @@ int main(void)
   /* definition and creation of about */
   osThreadDef(about, about_t, osPriorityIdle, 0, 128);
   aboutHandle = osThreadCreate(osThread(about), NULL);
+
+  /* definition and creation of MovingSnake */
+  osThreadDef(MovingSnake, movingSnake, osPriorityIdle, 0, 128);
+  MovingSnakeHandle = osThreadCreate(osThread(MovingSnake), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -862,7 +869,10 @@ void start_t(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+
+  }
+
+    osDelay(1000);
   }
   /* USER CODE END start_t */
 }
@@ -1079,6 +1089,70 @@ void about_t(void const * argument)
 
   }
   /* USER CODE END about_t */
+}
+
+/* USER CODE BEGIN Header_movingSnake */
+/**
+* @brief Function implementing the MovingSnake thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_movingSnake */
+void movingSnake(void const * argument)
+{
+  /* USER CODE BEGIN movingSnake */
+  /* Infinite loop */
+  for(;;)
+  {
+	  // clear one node of snake body
+	  setCursor(snake.snake_head->col, snake.snake_head->row);
+	  print(" ");
+
+	  uint8_t prev_col = snake.snake_head->col;
+	  uint8_t prev_row = snake.snake_head->row;
+
+		switch(direction) {
+		case UP:
+			if(snake.snake_head->row == 0)
+				snake.snake_head->row = 4;
+			snake.snake_head->row -= 1;
+			break;
+		case RIGHT:
+			snake.snake_head->col += 1;
+			if(snake.snake_head->col == 20)
+				snake.snake_head->col = 0;
+			break;
+		case DOWN:
+			snake.snake_head->row += 1;
+			if(snake.snake_head->row == 4)
+				snake.snake_head->row = 0;
+			break;
+		case LEFT:
+			if(snake.snake_head->col == 0)
+				snake.snake_head->row = 20;
+			snake.snake_head->row -= 1;
+			break;
+		}
+
+		setCursor(snake.snake_head->col, snake.snake_head->row);
+		write(snake.snake_head->custom_char_ind);
+
+
+		Node* current_node = snake.snake_head->next;
+
+		while(current_node != NULL) {
+			// clear one node of snake body
+			setCursor(current_node->col, current_node->row);
+			print(" ");
+			// updating node
+			current_node->col = prev_col;
+			current_node->row = prev_row;
+			// printing it in new position
+			setCursor(current_node->col, current_node->row);
+			write(current_node->custom_char_ind);
+			current_node = current_node->next;
+  }
+  /* USER CODE END movingSnake */
 }
 
 /**

@@ -61,7 +61,10 @@ void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char)
 {
 	Node *new_node = (Node *)malloc(sizeof(Node));
-	new_node->next = snake.snake_tail;
+
+	new_node->next = NULL;
+	if(snake.snake_tail != NULL)
+		snake.snake_tail->next = new_node;
 	new_node->col = col;
 	new_node->row = row;
 	new_node->custom_char_ind = custom_char;
@@ -72,7 +75,13 @@ void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char)
 
 void initialGame()
 {
-	addNodeFront(0, 0, 1);
+	createChar(0, snake_body);
+	createChar(1, head_up);
+	createChar(2, head_right);
+	createChar(3, head_down);
+	createChar(4, head_left);
+
+	addNodeFront(1, 0, 2);
 	addNodeFront(0, 0, 0);
 
 
@@ -80,24 +89,57 @@ void initialGame()
 
 
 void moveSnake() {
-	Node* current_node = snake.snake_tail;
-	while(current_node->next != NULL) {
+	// clear one node of snake body
+	setCursor(snake.snake_head->col, snake.snake_head->row);
+	print(" ");
+
+	uint8_t prev_col = snake.snake_head->col;
+	uint8_t prev_row = snake.snake_head->row;
+
+	switch(direction) {
+	case UP:
+		if(snake.snake_head->row == 0)
+			snake.snake_head->row = 4;
+		snake.snake_head->row -= 1;
+		break;
+	case RIGHT:
+		snake.snake_head->col += 1;
+		if(snake.snake_head->col == 20)
+			snake.snake_head->col = 0;
+		break;
+	case DOWN:
+		snake.snake_head->row += 1;
+		if(snake.snake_head->row == 4)
+			snake.snake_head->row = 0;
+		break;
+	case LEFT:
+		if(snake.snake_head->col == 0)
+			snake.snake_head->row = 20;
+		snake.snake_head->row -= 1;
+		break;
+	}
+
+	setCursor(snake.snake_head->col, snake.snake_head->row);
+	write(snake.snake_head->custom_char_ind);
+
+
+	Node* current_node = snake.snake_head->next;
+
+	while(current_node != NULL) {
 		// clear one node of snake body
 		setCursor(current_node->col, current_node->row);
+		print(" ");
 		// updating node
-		current_node->col = current_node->next->col;
-		current_node->row = current_node->next->row;
+		current_node->col = prev_col;
+		current_node->row = prev_row;
 		// printing it in new position
 		setCursor(current_node->col, current_node->row);
 		write(current_node->custom_char_ind);
 		current_node = current_node->next;
 	}
-//	switch(direction) {
-//	case UP:
-//	case RIGHT:
-//	case DOWN:
-//	case LEFT:
-//	}
+
+
+
 }
 
 
