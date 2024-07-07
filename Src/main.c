@@ -706,6 +706,7 @@ void setting_t(void const * argument)
 
 
 		  char str[20];
+		  //player name
 		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
 		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
 		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
@@ -727,9 +728,10 @@ void mode_t(void const * argument)
   /* USER CODE BEGIN mode_t */
   /* Infinite loop */
 	static uint8_t mode_selected_item = 0;
+	setCursor(0, 3); print("-^-^-^-^-^-^-^-^-^-^");
 	  for(;;)
 	  {
-		  osEvent os_signal_event = osSignalWait(0, osWaitForever);
+		  osSignalWait(0, osWaitForever);
 
 		  switch(os_signal_event.value.v) {
 			  case 0x02:
@@ -748,9 +750,9 @@ void mode_t(void const * argument)
 				  continue;
 		  }
 
-		  setCursor(0, 0); print(mode_selected_item == 0 ? (selected_mode == 0 ? ">" : "-") : " "); print("MODE1: dnt tch urslf");
-		  setCursor(0, 1); print(mode_selected_item == 1 ? (selected_mode == 1 ? ">" : "-") : " "); print("MODE2: dnt tch walls");
-		  setCursor(0, 2); print(mode_selected_item == 2 ? (selected_mode == 2 ? ">" : "-") : " "); print("MODE3: spd is incrsg");
+		  setCursor(0, 0); print(selected_mode == 0 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE1: dnt tch urslf");
+		  setCursor(0, 1); print(selected_mode == 1 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE2: dnt tch walls");
+		  setCursor(0, 2); print(selected_mode == 2 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE3: spd is incrsg");
 	  }
 	  osThreadTerminate(NULL);
   /* USER CODE END mode_t */
@@ -769,8 +771,10 @@ void about_t(void const * argument)
   /* Infinite loop */
 	static uint8_t second = 0;
 	static char str[5] = "00:00";
+  osSignalWait(0, osWaitForever);
   for(;;)
   {
+
 	  ++second;
 	  setCursor(0, 0); print("Developed By:");
 	  setCursor(0, 1); print("S.Pouria Hosseini");
