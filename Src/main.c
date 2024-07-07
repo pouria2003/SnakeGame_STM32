@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "callbacksAndFunctions.h"
+#include "buzzer.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -33,7 +34,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 #define NTHREADS 6
+#define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -103,6 +109,7 @@ uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
 char player_name[7] = "pouria";
+extern const Tone snake_song;
 
 /* USER CODE END 0 */
 
@@ -151,10 +158,10 @@ int main(void)
 
 	LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);
 	begin(20, 4);
-//	initialGame();
-//	HAL_Delay(5000);
-//	char uart_data[100] = ":D";
-//    HAL_UART_Transmit(&huart1, uart_data, 3, HAL_MAX_DELAY);
+
+	PWM_Start();
+	Change_Melody(snake_song, ARRAY_LENGTH(snake_body));
+	HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
@@ -765,7 +772,6 @@ void introPage_t(void const * argument)
   for(;;)
   {
 
-
 	  setCursor(0,  0); print(" "); setCursor(0,  0); print(str);
 	  setCursor(1,  0); print(" "); setCursor(1,  0); print(str);
 	  setCursor(18, 0); print(" "); setCursor(18, 0); print(str);
@@ -1086,7 +1092,9 @@ void about_t(void const * argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+	if(htim->Instance == TIM3) {
+		  Update_Melody();
+	}
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM6) {
     HAL_IncTick();

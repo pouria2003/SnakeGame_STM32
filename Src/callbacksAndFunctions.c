@@ -106,14 +106,6 @@ void moveSnake() {
 
 
 
-
-
-
-
-
-
-
-
 // Input pull down rising edge trigger interrupt pins:
 // Row1 PD3, Row2 PD5, Row3 PD7, Row4 PB4
 GPIO_TypeDef *const Row_ports[] = {GPIOD, GPIOC, GPIOC, GPIOC};
