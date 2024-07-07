@@ -92,12 +92,28 @@ void moveSnake() {
 		write(current_node->custom_char_ind);
 		current_node = current_node->next;
 	}
-//	switch(direction) {
-//	case UP:
-//	case RIGHT:
-//	case DOWN:
-//	case LEFT:
-//	}
+	switch(direction) {
+	case UP:
+		if(current_node->row == 0)
+			current_node->row = 4;
+		current_node->row -= 1;
+		break;
+	case RIGHT:
+		current_node->col += 1;
+		if(current_node->col == 20)
+			current_node->col = 0;
+		break;
+	case DOWN:
+		current_node->row += 1;
+		if(current_node->row == 4)
+			current_node->row = 0;
+		break;
+	case LEFT:
+		if(current_node->col == 0)
+			current_node->row = 20;
+		current_node->row -= 1;
+		break;
+	}
 }
 
 
