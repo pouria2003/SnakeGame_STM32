@@ -19,6 +19,26 @@ enum Threads{
 	ABOUT
 };
 
+enum Directions {
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT
+};
+
+typedef struct Node {
+	uint8_t custom_char_ind;
+	struct Node *next;
+	uint8_t col;
+	uint8_t row;
+} Node;
+
+
+typedef struct Snake{
+	Node *snake_tail;
+	Node *snake_head;
+} Snake;
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 

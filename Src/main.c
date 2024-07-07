@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "callbacksAndFunctions.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -156,8 +157,10 @@ int main(void)
 
 	LiquidCrystal(GPIOD, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14);
 	begin(20, 4);
-
-
+//	initialGame();
+//	HAL_Delay(5000);
+	char uart_data[100] = ":D";
+    HAL_UART_Transmit(&huart1, uart_data, 3, HAL_MAX_DELAY);
 
   /* USER CODE END 2 */
 
@@ -849,78 +852,78 @@ void setting_t(void const * argument)
 	static char pointer = '-';
 	  for(;;)
 	  {
-		  osSignalWait(0, osWaitForever);
-
-		  if(setting_state == CHOOSING) {
-			  switch(tsignals[SETTING]) {
-			  case 0x02:
-				  setting_selected_item += 1;
-				  if(setting_selected_item == 4) setting_selected_item = 0;
-				  break;
-			  case 0x0A:
-				  if(setting_selected_item == 0) setting_selected_item = 4;
-				  setting_selected_item -= 1;
-				  break;
-			  case 0x0D:
-				  setting_state = CHANGING;
-				  pointer = '>';
-				  break;
-			  default:
-				  continue;
-			  }
-		  } else if(setting_state == CHANGING) {
-			  switch(tsignals[SETTING]) {
-			  case 0x02:
-				  switch (setting_selected_item) {
-					case 0:
-						initial_health += 1;
-						initial_health <= 10 ? : initial_health = 10;
-						break;
-					case 1:
-						initial_speed += 1;
-						initial_speed <= 10 ? : initial_speed = 10;
-						break;
-					case 2:
-						sound_state ? sound_state = 0 : sound_state = 1;
-						break;
-					case 3:
-						blocks_number += 1;
-						blocks_number <= 6 ? : blocks_number = 6;
-						break;
-				}
-				  break;
-			  case 0x0A:
-				  switch (setting_selected_item) {
-					case 0:
-						initial_health -= 1;
-						initial_health >= 0 ? : initial_health = 0;
-						break;
-					case 1:
-						initial_speed -= 1;
-						initial_speed >= 0 ? : initial_speed = 0;
-						break;
-					case 2:
-						sound_state ? sound_state = 0 : sound_state = 1;
-						break;
-					case 3:
-						blocks_number -= 1;
-						blocks_number >= 0 ? : blocks_number = 0;
-						break;
-				  }
-				  break;
-			  case 0x0D:
-				  setting_state = CHOOSING;
-				  pointer = '-';
-				  break;
-			  }
-		  }
-
-
-		  char str[20];
-		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
-		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
-		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
-		  setCursor(0, 3); sprintf(str, "%cBLOCKS : %d         ", setting_selected_item == 3 ? pointer : ' ', blocks_number); print(str);
+//		  osSignalWait(0, osWaitForever);
+//
+//		  if(setting_state == CHOOSING) {
+//			  switch(tsignals[SETTING]) {
+//			  case 0x02:
+//				  setting_selected_item += 1;
+//				  if(setting_selected_item == 4) setting_selected_item = 0;
+//				  break;
+//			  case 0x0A:
+//				  if(setting_selected_item == 0) setting_selected_item = 4;
+//				  setting_selected_item -= 1;
+//				  break;
+//			  case 0x0D:
+//				  setting_state = CHANGING;
+//				  pointer = '>';
+//				  break;
+//			  default:
+//				  continue;
+//			  }
+//		  } else if(setting_state == CHANGING) {
+//			  switch(tsignals[SETTING]) {
+//			  case 0x02:
+//				  switch (setting_selected_item) {
+//					case 0:
+//						initial_health += 1;
+//						initial_health <= 10 ? : initial_health = 10;
+//						break;
+//					case 1:
+//						initial_speed += 1;
+//						initial_speed <= 10 ? : initial_speed = 10;
+//						break;
+//					case 2:
+//						sound_state ? sound_state = 0 : sound_state = 1;
+//						break;
+//					case 3:
+//						blocks_number += 1;
+//						blocks_number <= 6 ? : blocks_number = 6;
+//						break;
+//				}
+//				  break;
+//			  case 0x0A:
+//				  switch (setting_selected_item) {
+//					case 0:
+//						initial_health -= 1;
+//						initial_health >= 0 ? : initial_health = 0;
+//						break;
+//					case 1:
+//						initial_speed -= 1;
+//						initial_speed >= 0 ? : initial_speed = 0;
+//						break;
+//					case 2:
+//						sound_state ? sound_state = 0 : sound_state = 1;
+//						break;
+//					case 3:
+//						blocks_number -= 1;
+//						blocks_number >= 0 ? : blocks_number = 0;
+//						break;
+//				  }
+//				  break;
+//			  case 0x0D:
+//				  setting_state = CHOOSING;
+//				  pointer = '-';
+//				  break;
+//			  }
+//		  }
+//
+//
+//		  char str[20];
+//		  setCursor(0, 0); sprintf(str, "%cHEALTH : %d         ", setting_selected_item == 0 ? pointer : ' ', initial_health); print(str);
+//		  setCursor(0, 1); sprintf(str, "%cSPEED  : %d         ", setting_selected_item == 1 ? pointer : ' ', initial_speed); print(str);
+//		  setCursor(0, 2); sprintf(str, "%cSOUNDS : %s       ", setting_selected_item == 2 ? pointer : ' ', sound_state ? "on " : "off"); print(str);
+//		  setCursor(0, 3); sprintf(str, "%cBLOCKS : %d         ", setting_selected_item == 3 ? pointer : ' ', blocks_number); print(str);
 	  }
 	  osThreadTerminate(NULL);
   /* USER CODE END setting_t */
@@ -982,6 +985,7 @@ void about_t(void const * argument)
 	static char str[5] = "00:00";
   for(;;)
   {
+	  osSignalWait(0, osWaitForever);
 	  ++second;
 	  setCursor(0, 0); print("Developed By:");
 	  setCursor(0, 1); print("S.Pouria Hosseini");

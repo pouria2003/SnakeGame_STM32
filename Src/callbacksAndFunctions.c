@@ -7,8 +7,10 @@
 
 
 #include "callbacksAndFunctions.h"
+#include "customChars.h"
 #include "main.h"
-
+#include "cmsis_os.h"
+#include <malloc.h>
 
 enum GameState {
 	INTRO,
@@ -26,6 +28,9 @@ extern enum Threads;
 
 extern uint8_t tsignals[NTHREADS];
 
+Snake snake = {NULL};
+
+uint8_t direction = RIGHT;
 
 void flowHandler(uint8_t keypad_button_number, uint8_t menu_item_selected) {
 	switch(game_state) {
@@ -41,6 +46,61 @@ void flowHandler(uint8_t keypad_button_number, uint8_t menu_item_selected) {
 		  break;
 	  }
 }
+
+void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char)
+{
+	Node *new_node = (Node *)malloc(sizeof(Node));
+	new_node->next = snake.snake_body;
+	new_node->col = col;
+	new_node->row = row;
+	new_node->custom_char_ind = custom_char;
+	if(snake->snake_head == NULL)
+		snakeHead = new_node;
+	snake.snake_body = new_node;
+}
+
+void initialGame()
+{
+	addNodeFront(0, 0, 1);
+	addNodeFront(0, 0, 0);
+
+
+}
+
+
+void moveSnake() {
+	Node* current_node = snake.snake_body;
+	while(current_node->next != NULL) {
+		// clear one node of snake body
+		setCursor(current_node->col, current_node->row);
+		// updating node
+		current_node->col = current_node->next->col;
+		current_node->row = current_node->next->row;
+		// printing it in new position
+		setCursor(current_node->col, current_node->row);
+		write(current_node->custom_char_ind);
+		current_node = current_node->next;
+	}
+	switch(direction) {
+	case UP:
+	case RIGHT:
+	case DOWN:
+	case LEFT:
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // Input pull down rising edge trigger interrupt pins:
@@ -116,58 +176,4 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
   flowHandler(button_number, 0);
 
-  switch (button_number)
-  {
-  case 1:
-    /* code */
-    break;
-  case 2:
-    /* code */
-    break;
-  case 3:
-    /* code */
-    break;
-  case 4:
-    /* code */
-    break;
-  case 5:
-    /* code */
-    break;
-  case 6:
-    /* code */
-    break;
-  case 7:
-    /* code */
-    break;
-  case 8:
-    /* code */
-    break;
-  case 9:
-    /* code */
-    break;
-  case 10:
-    /* code */
-    break;
-  case 11:
-    /* code */
-    break;
-  case 12:
-    /* code */
-    break;
-  case 13:
-    /* code */
-    break;
-  case 14:
-    /* code */
-    break;
-  case 15:
-    /* code */
-    break;
-  case 16:
-    /* code */
-    break;
-
-  default:
-    break;
-  }
 }
