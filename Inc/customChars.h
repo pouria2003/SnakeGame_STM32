@@ -14,7 +14,7 @@
 
 typedef unsigned char byte;
 
-byte snakeBody[] = {
+byte snake_body[] = {
   0x1F,
   0x1F,
   0x1F,
@@ -25,17 +25,6 @@ byte snakeBody[] = {
   0x1F
 };
 
-
-byte snakeHead[] = {
-	0x1E,
-	0x1F,
-	0x19,
-	0x19,
-	0x1F,
-	0x1F,
-    0x1F,
-	0x1E
-};
 
 byte head_down[] = {
   0x1F,
