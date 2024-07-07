@@ -96,7 +96,7 @@ uint8_t initial_speed = 1;
 uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
-char player_name[6] = "pouria";
+char player_name[7] = "pouria";
 
 
 /* USER CODE END 0 */
