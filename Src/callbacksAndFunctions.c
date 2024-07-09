@@ -42,7 +42,8 @@ void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 		osSignalSet(MenuPageHandle, 0);
 		break;
 	case START:
-		//to do
+		tsignals[START_T] = keypad_button_number;
+		osSignalSet(startHandle, 0);
 		break;
 	case SETTING:
 		tsignals[SETTING_T] = keypad_button_number;
@@ -83,8 +84,6 @@ void initialGame()
 
 	addNodeFront(1, 0, 2);
 	addNodeFront(0, 0, 0);
-
-
 }
 
 
@@ -141,14 +140,6 @@ void moveSnake() {
 
 
 }
-
-
-
-
-
-
-
-
 
 
 
