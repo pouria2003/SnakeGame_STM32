@@ -908,38 +908,76 @@ void setting_t(void const * argument)
   /* USER CODE BEGIN setting_t */
   /* Infinite loop */
 	static uint8_t setting_selected_item = 0;
-	static uint8_t setting_state = CHOOSING;
-	static char str[20];
+	static uint8_t setting_pointer = 0;
+	static uint8_t setting_choosing_state = 1;
+	const uint8_t max_items = 5;
+//	static uint8_t setting_scroll = SCROLL0;;
+
+	static char str[max_items][20];
+
 	  for(;;)
 	  {
 		  osSignalWait(0, osWaitForever);
 
-		  if(setting_state == CHOOSING) {
+		  if(setting_choosing_state) {
 			  switch(tsignals[SETTING_T]) {
 			  case 0:
 				  //first time comming
 				  clear();
-				  setCursor(0, 0); sprintf(str, "-HEALTH : %d         ", initial_health); print(str);
-				  setCursor(0, 1); sprintf(str, " SPEED  : %d         ", initial_speed); print(str);
-				  setCursor(0, 2); sprintf(str, " SOUNDS : %s       ", sound_state ? "on " : "off"); print(str);
-				  setCursor(0, 3); sprintf(str, " BLOCKS : %d         ", blocks_number); print(str);
+				  setCursor(0, 0); sprintf(str[0], "-HEALTH : %d        ", initial_health); print(str);
+				  setCursor(0, 1); sprintf(str[1], " SPEED  : %d        ", initial_speed); print(str);
+				  setCursor(0, 2); sprintf(str[2], " SOUNDS : %s       ", sound_state ? "on " : "off"); print(str);
+				  setCursor(0, 3); sprintf(str[3], " BLOCKS : %d         ", blocks_number); print(str);
+				  sprintf(str[4], " NAME   : %s", player_name);
 				  break;
 			  case 10:
-				  setCursor(0, setting_selected_item); print(" ");
+				  setCursor(0, setting_pointer); print(" ");
 				  setting_selected_item += 1;
-				  if(setting_selected_item == 4) setting_selected_item = 0;
-				  setCursor(0, setting_selected_item); print("-");
+				  if(setting_selected_item == max_items) {
+					  setting_selected_item = 0;
+					  setting_pointer = 0;
+					  setCursor(0,  0); print(str[setting_selected_item]);
+					  setCursor(0,  1); print(str[setting_selected_item + 1]);
+					  setCursor(0,  2); print(str[setting_selected_item + 2]);
+					  setCursor(0,  3); print(str[setting_selected_item + 3]);
+				  } else {
+					  setting_pointer += 1;
+					  if(setting_pointer == 4) {
+						  setCursor(0,  0); print(str[setting_selected_item - 3]);
+						  setCursor(0,  1); print(str[setting_selected_item - 2]);
+						  setCursor(0,  2); print(str[setting_selected_item - 1]);
+						  setCursor(0,  3); print(str[setting_selected_item]);
+						  setting_pointer = 3;
+					  }
+				  }
+				  setCursor(0, setting_pointer); print("-");
 				  break;
 			  case 2:
-				  setCursor(0, setting_selected_item); print(" ");
-				  if(setting_selected_item == 0) setting_selected_item = 4;
-				  setting_selected_item -= 1;
-				  setCursor(0, setting_selected_item); print("-");
+				  setCursor(0, setting_pointer); print(" ");
+				  if(setting_selected_item == 0) {
+					  setting_selected_item = max_items - 1;
+					  setting_pointer = 3;
+					  setCursor(0,  0); print(str[setting_selected_item - 3]);
+					  setCursor(0,  1); print(str[setting_selected_item - 2]);
+					  setCursor(0,  2); print(str[setting_selected_item - 1]);
+					  setCursor(0,  3); print(str[setting_selected_item]);
+				  } else {
+					  setting_selected_item -= 1;
+					  if(setting_pointer == 0) {
+						  setCursor(0,  0); print(str[setting_selected_item]);
+						  setCursor(0,  1); print(str[setting_selected_item + 1]);
+						  setCursor(0,  2); print(str[setting_selected_item + 2]);
+						  setCursor(0,  3); print(str[setting_selected_item + 3]);
+						  setting_pointer = 1;
+					  }
+					  setting_pointer -= 1;
+				  }
+				  setCursor(0, setting_pointer); print("-");
 				  break;
 			  case 6:
-				  setCursor(0, setting_selected_item); print(" ");
-				  setting_state = CHANGING;
-				  setCursor(0, setting_selected_item); print(">");
+				  setCursor(0, setting_pointer); print(" ");
+				  setting_choosing_state = 0;
+				  setCursor(0, setting_pointer); print(">");
 				  break;
 			  case 5:
 				  tsignals[MENU_T] = 0;
@@ -949,28 +987,33 @@ void setting_t(void const * argument)
 				  break;
 
 			  }
-		  } else if(setting_state == CHANGING) {
+		  } else {
 			  switch(tsignals[SETTING]) {
 			  case 2:
 				  switch (setting_selected_item) {
 					case 0:
 						initial_health += 1;
 						if(initial_health > 9) initial_health = 9;
-						setCursor(10, 0); sprintf(str, "%d", initial_health); print(str);
+						setCursor(10, setting_pointer); sprintf(str[0][10], "%d", initial_health); print(str[0][10]);
 						break;
 					case 1:
 						initial_speed += 1;
 						if(initial_speed > 9) initial_speed = 9;
-						setCursor(10, 1); sprintf(str, "%d", initial_speed); print(str);
+						setCursor(10, setting_pointer); sprintf(str[1][10], "%d", initial_speed); print(str[1][10]);
 						break;
 					case 2:
 						sound_state = sound_state ? 0 : 1;
-						setCursor(10, 2); print(sound_state ? "on " : "off");
+						setCursor(10, setting_pointer); sprintf(str[2][10], "%s", sound_state ? "on " : "off"); print(str[2][10]);
 						break;
 					case 3:
 						blocks_number += 1;
 						if(blocks_number > 6) blocks_number = 6;
-						setCursor(10, 3); sprintf(str, "%d", blocks_number); print(str);
+						setCursor(10, setting_pointer); sprintf(str[3][10], "%d", blocks_number); print(str[3][10]);
+						break;
+					case 4:
+						//player_name change
+						player_name[0]++;
+						setCursor(10, setting_pointer); sprintf(str[4][10], "%s", player_name); print(str[4][10]);
 						break;
 				}
 				  break;
@@ -979,20 +1022,24 @@ void setting_t(void const * argument)
 					case 0:
 						if(initial_health == 0) initial_health = 1;
 						initial_health -= 1;
-						setCursor(10, 0); sprintf(str, "%d", initial_health); print(str);
+						setCursor(10, setting_pointer); sprintf(str[0][10], "%d", initial_health); print(str[0][10]);
 						break;
 					case 1:
 						if(initial_speed == 0) initial_speed = 1;
 						initial_speed -= 1;
-						setCursor(10, 1); sprintf(str, "%d", initial_speed); print(str);
+						setCursor(10, setting_pointer); sprintf(str[1][10], "%d", initial_speed); print(str[1][10]);
 						break;
 					case 2:
 						sound_state = sound_state ? 0 : 1;
-						setCursor(10, 2); print(sound_state ? "on " : "off");
+						setCursor(10, setting_pointer); sprintf(str[2][10], "%s", sound_state ? "on " : "off"); print(str[2][10]);
 					case 3:
 						if(blocks_number == 0) blocks_number = 1;
 						blocks_number -= 1;
-						setCursor(10, 3); sprintf(str, "%d", blocks_number); print(str);
+						setCursor(10, setting_pointer); sprintf(str[3][10], "%d", blocks_number); print(str[3][10]);
+						break;
+					case 4:
+					player_name[0]--;
+					setCursor(10, setting_pointer); sprintf(str[4][10], "%s", player_name); print(str[4][10]);
 						break;
 				  }
 				  break;
