@@ -19,11 +19,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "callbacksAndFunctions.h"
-#include "buzzer.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "callbacksAndFunctions.h"
+#include "buzzer.h"
 
 /* USER CODE END Includes */
 
@@ -70,6 +71,7 @@ osThreadId settingHandle;
 osThreadId modeHandle;
 osThreadId aboutHandle;
 osThreadId MovingSnakeHandle;
+osThreadId updateMelodyHandle;
 /* USER CODE BEGIN PV */
 
 
@@ -93,6 +95,7 @@ void setting_t(void const * argument);
 void mode_t(void const * argument);
 void about_t(void const * argument);
 void movingSnake(void const * argument);
+void updateMelody_t(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -112,7 +115,8 @@ uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
 char player_name[7] = "pouria";
-extern const Tone snake_song;
+extern const Tone snake_song[];
+extern Snake snake;
 
 /* USER CODE END 0 */
 
@@ -163,7 +167,8 @@ int main(void)
 	begin(20, 4);
 
 	PWM_Start();
-	Change_Melody(snake_song, ARRAY_LENGTH(snake_body));
+//	Change_Melody(snake_song, ARRAY_LENGTH(snake_body));
+	Change_Melody(snake_song, 65);
 	HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
@@ -190,7 +195,7 @@ int main(void)
   IntroPageHandle = osThreadCreate(osThread(IntroPage), NULL);
 
   /* definition and creation of MenuPage */
-  osThreadDef(MenuPage, menuPage_t, osPriorityNormal, 0, 128);
+  osThreadDef(MenuPage, menuPage_t, osPriorityIdle, 0, 128);
   MenuPageHandle = osThreadCreate(osThread(MenuPage), NULL);
 
   /* definition and creation of start */
@@ -212,6 +217,10 @@ int main(void)
   /* definition and creation of MovingSnake */
   osThreadDef(MovingSnake, movingSnake, osPriorityIdle, 0, 128);
   MovingSnakeHandle = osThreadCreate(osThread(MovingSnake), NULL);
+
+  /* definition and creation of updateMelody */
+  osThreadDef(updateMelody, updateMelody_t, osPriorityIdle, 0, 128);
+  updateMelodyHandle = osThreadCreate(osThread(updateMelody), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -867,13 +876,23 @@ void start_t(void const * argument)
 {
   /* USER CODE BEGIN start_t */
   /* Infinite loop */
-  for(;;)
-  {
+	for(;;)
+	{
+		if(game_state != START)
+			osSignalWait(0, osWaitForever);
+		else {
+			switch (selected_mode) {
+				case 1:
 
-  }
+					break;
+				default:
+					break;
+			}
+		}
+		osDelay(initial_speed);
 
-    osDelay(1000);
-  }
+
+	}
   /* USER CODE END start_t */
 }
 
@@ -1105,54 +1124,76 @@ void movingSnake(void const * argument)
   for(;;)
   {
 	  // clear one node of snake body
-	  setCursor(snake.snake_head->col, snake.snake_head->row);
-	  print(" ");
+	  	  osSignalWait(0, osWaitForever);
+			  setCursor(snake.snake_head->col, snake.snake_head->row);
+			  print(" ");
 
-	  uint8_t prev_col = snake.snake_head->col;
-	  uint8_t prev_row = snake.snake_head->row;
+			  uint8_t prev_col = snake.snake_head->col;
+			  uint8_t prev_row = snake.snake_head->row;
 
-		switch(direction) {
-		case UP:
-			if(snake.snake_head->row == 0)
-				snake.snake_head->row = 4;
-			snake.snake_head->row -= 1;
-			break;
-		case RIGHT:
-			snake.snake_head->col += 1;
-			if(snake.snake_head->col == 20)
-				snake.snake_head->col = 0;
-			break;
-		case DOWN:
-			snake.snake_head->row += 1;
-			if(snake.snake_head->row == 4)
-				snake.snake_head->row = 0;
-			break;
-		case LEFT:
-			if(snake.snake_head->col == 0)
-				snake.snake_head->row = 20;
-			snake.snake_head->row -= 1;
-			break;
-		}
+				switch(direction) {
+				case UP:
+					if(snake.snake_head->row == 0)
+						snake.snake_head->row = 4;
+					snake.snake_head->row -= 1;
+					break;
+				case RIGHT:
+					snake.snake_head->col += 1;
+					if(snake.snake_head->col == 20)
+						snake.snake_head->col = 0;
+					break;
+				case DOWN:
+					snake.snake_head->row += 1;
+					if(snake.snake_head->row == 4)
+						snake.snake_head->row = 0;
+					break;
+				case LEFT:
+					if(snake.snake_head->col == 0)
+						snake.snake_head->row = 20;
+					snake.snake_head->row -= 1;
+					break;
+				}
 
-		setCursor(snake.snake_head->col, snake.snake_head->row);
-		write(snake.snake_head->custom_char_ind);
+				setCursor(snake.snake_head->col, snake.snake_head->row);
+				write(snake.snake_head->custom_char_ind);
 
 
-		Node* current_node = snake.snake_head->next;
+				Node* current_node = snake.snake_head->next;
 
-		while(current_node != NULL) {
-			// clear one node of snake body
-			setCursor(current_node->col, current_node->row);
-			print(" ");
-			// updating node
-			current_node->col = prev_col;
-			current_node->row = prev_row;
-			// printing it in new position
-			setCursor(current_node->col, current_node->row);
-			write(current_node->custom_char_ind);
-			current_node = current_node->next;
-  }
+				while(current_node != NULL) {
+					// clear one node of snake body
+					setCursor(current_node->col, current_node->row);
+					print(" ");
+					// updating node
+					current_node->col = prev_col;
+					current_node->row = prev_row;
+					// printing it in new position
+					setCursor(current_node->col, current_node->row);
+					write(current_node->custom_char_ind);
+					current_node = current_node->next;
+
   /* USER CODE END movingSnake */
+}
+}
+
+/* USER CODE BEGIN Header_updateMelody_t */
+/**
+* @brief Function implementing the updateMelody thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_updateMelody_t */
+void updateMelody_t(void const * argument)
+{
+  /* USER CODE BEGIN updateMelody_t */
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(game_state != START)
+		  Update_Melody();
+//    osDelay(1);
+  }
+  /* USER CODE END updateMelody_t */
 }
 
 /**
@@ -1166,9 +1207,7 @@ void movingSnake(void const * argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-	if(htim->Instance == TIM3) {
-		  Update_Melody();
-	}
+
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM6) {
     HAL_IncTick();

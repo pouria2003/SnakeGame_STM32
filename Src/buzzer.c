@@ -132,11 +132,15 @@ void Change_Melody(const Tone *melody, uint16_t tone_count)
 
 void Update_Melody()
 {
-    if ((HAL_GetTick() > current_tone_end) && (current_tone_number < melody_tone_count))
+    if (HAL_GetTick() > current_tone_end)
     {
-        const Tone active_tone = *(melody_ptr + current_tone_number);
-        PWM_Change_Tone(active_tone.frequency, volume);
-        current_tone_end = HAL_GetTick() + active_tone.duration;
-        current_tone_number++;
+    	if (current_tone_number < melody_tone_count) {
+			const Tone active_tone = *(melody_ptr + current_tone_number);
+			PWM_Change_Tone(active_tone.frequency, volume);
+			current_tone_end = HAL_GetTick() + active_tone.duration;
+			current_tone_number++;
+    	} else {
+    		current_tone_number = 0;
+    	}
     }
 }

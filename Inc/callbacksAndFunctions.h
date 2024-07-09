@@ -34,7 +34,7 @@ typedef struct Node {
 } Node;
 
 
-typedef struct Snake{
+typedef struct Snake {
 	Node *snake_tail;
 	Node *snake_head;
 } Snake;
