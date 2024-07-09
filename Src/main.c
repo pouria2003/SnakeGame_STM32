@@ -37,6 +37,7 @@
 /* USER CODE BEGIN PD */
 
 #define NTHREADS 6
+#define SETTING_MAX_ITEMS 5
 #define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 
@@ -115,9 +116,22 @@ uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
 char player_name[7] = "pouria";
+
+
+
+char received_data[50];
+uint8_t data_index = 0;
+char receive;
+char transmit_data[50];
+//uint8_t uart_mode = 1;
+uint8_t log_state = 0;
+
+
 extern const Tone snake_song[];
 extern Snake snake;
-char received_byte;
+
+
+
 
 
 /* USER CODE END 0 */
@@ -177,10 +191,8 @@ int main(void)
 
 
 
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, 1);
-	received_byte = 'a';
 	HAL_UART_Transmit(&huart1, player_name, 7, HAL_MAX_DELAY);
-	HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	HAL_UART_Receive_IT(&huart1, &receive, 1);
 
   /* USER CODE END 2 */
 
@@ -914,10 +926,9 @@ void setting_t(void const * argument)
 	static uint8_t setting_selected_item = 0;
 	static uint8_t setting_pointer = 0;
 	static uint8_t setting_choosing_state = 1;
-	const uint8_t max_items = 5;
 //	static uint8_t setting_scroll = SCROLL0;;
 
-	static char str[max_items][20];
+	static char str[SETTING_MAX_ITEMS][20];
 
 	  for(;;)
 	  {
@@ -937,7 +948,7 @@ void setting_t(void const * argument)
 			  case 10:
 				  setCursor(0, setting_pointer); print(" ");
 				  setting_selected_item += 1;
-				  if(setting_selected_item == max_items) {
+				  if(setting_selected_item == SETTING_MAX_ITEMS) {
 					  setting_selected_item = 0;
 					  setting_pointer = 0;
 					  setCursor(0,  0); print(str[setting_selected_item]);
@@ -959,7 +970,7 @@ void setting_t(void const * argument)
 			  case 2:
 				  setCursor(0, setting_pointer); print(" ");
 				  if(setting_selected_item == 0) {
-					  setting_selected_item = max_items - 1;
+					  setting_selected_item = SETTING_MAX_ITEMS - 1;
 					  setting_pointer = 3;
 					  setCursor(0,  0); print(str[setting_selected_item - 3]);
 					  setCursor(0,  1); print(str[setting_selected_item - 2]);
@@ -1049,7 +1060,7 @@ void setting_t(void const * argument)
 				  break;
 			  case 6:
 				  setCursor(0, setting_selected_item); print(" ");
-				  setting_state = CHOOSING;
+				  setting_choosing_state = 1;
 				  setCursor(0, setting_selected_item); print("-");
 				  break;
 			  case 5:

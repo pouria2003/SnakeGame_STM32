@@ -124,6 +124,14 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+
+extern char received_data[50];
+extern uint8_t data_index;
+extern char receive;
+extern char transmit_data[50];
+extern uint8_t log_state;
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -28,10 +28,6 @@ extern uint8_t tsignals[NTHREADS];
 
 extern UART_HandleTypeDef huart1;
 
-extern char received_byte;
-
-
-
 Snake snake = {NULL};
 
 uint8_t direction = RIGHT;
@@ -92,7 +88,6 @@ void initialGame()
 	addNodeFront(0, 0, 0);
 }
 
-
 void moveSnake() {
 	// clear one node of snake body
 	setCursor(snake.snake_head->col, snake.snake_head->row);
@@ -150,8 +145,15 @@ void moveSnake() {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == USART1){
-		HAL_UART_Receive_IT(&huart1, &received_byte, 1);
+	if(huart->Instance == USART1) {
+		HAL_UART_Receive_IT(&huart1, &receive, 1);
+		received_data[data_index] = receive;
+		++data_index;
+
+		if(receive == '\r') {
+			flowHandler(received_data[0] - '0', 0);
+			data_index = 0;
+		}
 	}
 }
 
