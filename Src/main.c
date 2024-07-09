@@ -117,6 +117,8 @@ uint8_t selected_mode = 1;
 char player_name[7] = "pouria";
 extern const Tone snake_song[];
 extern Snake snake;
+char received_byte;
+
 
 /* USER CODE END 0 */
 
@@ -127,11 +129,13 @@ extern Snake snake;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+//
+//	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 0);
+//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, 0);
 
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, 1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, 1);
+
 
   /* USER CODE END 1 */
 
@@ -170,6 +174,13 @@ int main(void)
 //	Change_Melody(snake_song, ARRAY_LENGTH(snake_body));
 	Change_Melody(snake_song, 65);
 	HAL_TIM_Base_Start_IT(&htim3);
+
+
+
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, 1);
+	received_byte = 'a';
+	HAL_UART_Transmit(&huart1, player_name, 7, HAL_MAX_DELAY);
+	HAL_UART_Receive_IT(&huart1, &received_byte, 1);
 
   /* USER CODE END 2 */
 
@@ -233,6 +244,9 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -675,9 +689,6 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_RESET);
-
   /*Configure GPIO pins : DRDY_Pin MEMS_INT3_Pin MEMS_INT4_Pin MEMS_INT1_Pin
                            MEMS_INT2_Pin */
   GPIO_InitStruct.Pin = DRDY_Pin|MEMS_INT3_Pin|MEMS_INT4_Pin|MEMS_INT1_Pin
@@ -730,13 +741,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA8 PA9 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
@@ -853,7 +857,7 @@ void menuPage_t(void const * argument)
 		  break;
 	  case 6:
 		  // set signal according to menu item
-		   menu_selected_item == 0 ? game_state = START,   osSignalSet(startHandle, 0) :
+		   menu_selected_item == 0 ? game_state = START,   osSignalSet(MovingSnakeHandle, 0) :
 		  (menu_selected_item == 1 ? game_state = SETTING, osSignalSet(settingHandle, 0) :
 		  (menu_selected_item == 2 ? game_state = MODE,    osSignalSet(modeHandle, 0) :
 		  (menu_selected_item == 3 ? game_state = ABOUT, osSignalSet(aboutHandle, 0) : NULL)));
@@ -1172,6 +1176,7 @@ void movingSnake(void const * argument)
   {
 	  // clear one node of snake body
 	  	  osSignalWait(0, osWaitForever);
+	  	  while(game_state == START) {
 			  setCursor(snake.snake_head->col, snake.snake_head->row);
 			  print(" ");
 
@@ -1218,9 +1223,10 @@ void movingSnake(void const * argument)
 					setCursor(current_node->col, current_node->row);
 					write(current_node->custom_char_ind);
 					current_node = current_node->next;
-
+				}
+	  	  }
+  }
   /* USER CODE END movingSnake */
-}
 }
 
 /* USER CODE BEGIN Header_updateMelody_t */
