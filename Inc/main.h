@@ -33,6 +33,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 
 #include "buzzer.h"
+#include "cmsis_os.h"
+
 
 /* USER CODE END Includes */
 
@@ -125,11 +127,33 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 
+#define NTHREADS 6
+#define SETTING_MAX_ITEMS 5
+#define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+
 extern char received_data[50];
 extern uint8_t data_index;
 extern char receive;
 extern char transmit_data[50];
 extern uint8_t log_state;
+
+extern osThreadId MenuPageHandle;
+extern osThreadId startHandle;
+extern osThreadId settingHandle;
+extern osThreadId modeHandle;
+extern osThreadId aboutHandle;
+
+extern uint8_t game_state;
+extern uint8_t tsignals[NTHREADS];
+extern UART_HandleTypeDef huart1;
+extern uint8_t initial_health;
+extern uint8_t initial_speed;
+extern uint8_t sound_state;
+extern uint8_t blocks_number;
+extern uint8_t selected_mode;
+extern char player_name[7];
+extern char setting_options[SETTING_MAX_ITEMS][21];
 
 
 /* USER CODE END Private defines */

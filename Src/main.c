@@ -36,10 +36,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define NTHREADS 6
-#define SETTING_MAX_ITEMS 5
-#define ARRAY_LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
-
 
 
 /* USER CODE END PD */
@@ -73,6 +69,8 @@ osThreadId modeHandle;
 osThreadId aboutHandle;
 osThreadId MovingSnakeHandle;
 osThreadId updateMelodyHandle;
+osThreadId SoundEffectHandle;
+osThreadId sevenSegmentHandle;
 /* USER CODE BEGIN PV */
 
 
@@ -97,6 +95,8 @@ void mode_t(void const * argument);
 void about_t(void const * argument);
 void movingSnake(void const * argument);
 void updateMelody_t(void const * argument);
+void soundEffect_t(void const * argument);
+void sevenSegment_t(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -108,7 +108,7 @@ void updateMelody_t(void const * argument);
 extern uint8_t direction;
 
 
-uint8_t tsignals[NTHREADS];
+uint8_t tsignals[NTHREADS] = {0};
 uint8_t game_state = 0;
 uint8_t initial_health = 5;
 uint8_t initial_speed = 1;
@@ -125,7 +125,7 @@ char receive;
 char transmit_data[50];
 //uint8_t uart_mode = 1;
 uint8_t log_state = 0;
-
+char setting_options[SETTING_MAX_ITEMS][21];
 
 extern const Tone snake_song[];
 extern Snake snake;
@@ -191,7 +191,6 @@ int main(void)
 
 
 
-	HAL_UART_Transmit(&huart1, player_name, 7, HAL_MAX_DELAY);
 	HAL_UART_Receive_IT(&huart1, &receive, 1);
 
   /* USER CODE END 2 */
@@ -244,6 +243,14 @@ int main(void)
   /* definition and creation of updateMelody */
   osThreadDef(updateMelody, updateMelody_t, osPriorityIdle, 0, 128);
   updateMelodyHandle = osThreadCreate(osThread(updateMelody), NULL);
+
+  /* definition and creation of SoundEffect */
+  osThreadDef(SoundEffect, soundEffect_t, osPriorityIdle, 0, 128);
+  SoundEffectHandle = osThreadCreate(osThread(SoundEffect), NULL);
+
+  /* definition and creation of sevenSegment */
+  osThreadDef(sevenSegment, sevenSegment_t, osPriorityIdle, 0, 128);
+  sevenSegmentHandle = osThreadCreate(osThread(sevenSegment), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -696,10 +703,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_0
+                          |GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : DRDY_Pin MEMS_INT3_Pin MEMS_INT4_Pin MEMS_INT1_Pin
                            MEMS_INT2_Pin */
@@ -727,9 +736,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD8 PD9 PD10 PD11
-                           PD12 PD13 PD14 */
+                           PD12 PD13 PD14 PD0
+                           PD1 PD2 PD3 PD4
+                           PD5 PD6 PD7 */
   GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14;
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_0
+                          |GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -747,8 +760,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  /*Configure GPIO pins : PC9 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -816,10 +829,11 @@ void introPage_t(void const * argument)
 	  setCursor(1,  3); print(" "); setCursor(1,  3); print(str);
 	  setCursor(18, 3); print(" "); setCursor(18, 3); print(str);
 	  setCursor(19, 3); print(" "); setCursor(19, 3); print(str);
-	  setCursor(4,  1); print("#"); setCursor(7,  1); print("#"); osDelay(100);
+	  setCursor(4,  1); print("#"); setCursor(7,  1); print("#");
 	  setCursor(4,  1); print(" "); setCursor(7,  1); print(" ");
 
 	  if(game_state != INTRO) {
+	  		  osSignalSet(MenuPageHandle, 0);
 	  		  break;
 	  }
   }
@@ -847,7 +861,7 @@ void menuPage_t(void const * argument)
 
 	  switch(tsignals[MENU_T]) {
 	  case 0:
-		  osDelay(500);
+//		  osDelay(400);
 		  clear();
 		  menu_selected_item = 0;
 		  setCursor(0, 0); print("-START");
@@ -861,18 +875,33 @@ void menuPage_t(void const * argument)
 		  menu_selected_item -= 1;
 		  setCursor(0, menu_selected_item); print("-");
 		  break;
-	  case 10:
+	  case 8:
 		  setCursor(0, menu_selected_item); print(" ");
 		  menu_selected_item += 1;
 		  if(menu_selected_item == 4) menu_selected_item = 0;
 		  setCursor(0, menu_selected_item); print("-");
 		  break;
-	  case 6:
+	  case 5:
 		  // set signal according to menu item
-		   menu_selected_item == 0 ? game_state = START,   osSignalSet(MovingSnakeHandle, 0) :
-		  (menu_selected_item == 1 ? game_state = SETTING, osSignalSet(settingHandle, 0) :
-		  (menu_selected_item == 2 ? game_state = MODE,    osSignalSet(modeHandle, 0) :
-		  (menu_selected_item == 3 ? game_state = ABOUT, osSignalSet(aboutHandle, 0) : NULL)));
+		  switch (menu_selected_item) {
+			case 0:
+				game_state = START;
+				osSignalSet(MovingSnakeHandle, 0);
+				break;
+			case 1:
+				game_state = SETTING;
+				osSignalSet(settingHandle, 0);
+				break;
+			case 2:
+				game_state = MODE;
+				osSignalSet(modeHandle, 0);
+				break;
+			case 3:
+				game_state = ABOUT;
+				osSignalSet(aboutHandle, 0);
+				break;
+		}
+
 		  break;
 	  }
 
@@ -898,10 +927,8 @@ void start_t(void const * argument)
 			osSignalWait(0, osWaitForever);
 		else {
 			switch (selected_mode) {
-				case 1:
-
-					break;
 				default:
+
 					break;
 			}
 		}
@@ -928,40 +955,39 @@ void setting_t(void const * argument)
 	static uint8_t setting_choosing_state = 1;
 //	static uint8_t setting_scroll = SCROLL0;;
 
-	static char str[SETTING_MAX_ITEMS][20];
+
 
 	  for(;;)
 	  {
 		  osSignalWait(0, osWaitForever);
-
 		  if(setting_choosing_state) {
 			  switch(tsignals[SETTING_T]) {
 			  case 0:
 				  //first time comming
 				  clear();
-				  setCursor(0, 0); sprintf(str[0], "-HEALTH : %d        ", initial_health); print(str);
-				  setCursor(0, 1); sprintf(str[1], " SPEED  : %d        ", initial_speed); print(str);
-				  setCursor(0, 2); sprintf(str[2], " SOUNDS : %s       ", sound_state ? "on " : "off"); print(str);
-				  setCursor(0, 3); sprintf(str[3], " BLOCKS : %d         ", blocks_number); print(str);
-				  sprintf(str[4], " NAME   : %s", player_name);
+				  setCursor(0, 0); sprintf(setting_options[0], "-HEALTH : %d        ", initial_health); print(setting_options[0]);
+				  setCursor(0, 1); sprintf(setting_options[1], " SPEED  : %d        ", initial_speed); print(setting_options[1]);
+				  setCursor(0, 2); sprintf(setting_options[2], " SOUNDS : %s       ", sound_state ? "on " : "off"); print(setting_options[2]);
+				  setCursor(0, 3); sprintf(setting_options[3], " BLOCKS : %d         ", blocks_number); print(setting_options[3]);
+				  sprintf(setting_options[4], " NAME   : %s", player_name);
 				  break;
-			  case 10:
+			  case 8:
 				  setCursor(0, setting_pointer); print(" ");
 				  setting_selected_item += 1;
 				  if(setting_selected_item == SETTING_MAX_ITEMS) {
 					  setting_selected_item = 0;
 					  setting_pointer = 0;
-					  setCursor(0,  0); print(str[setting_selected_item]);
-					  setCursor(0,  1); print(str[setting_selected_item + 1]);
-					  setCursor(0,  2); print(str[setting_selected_item + 2]);
-					  setCursor(0,  3); print(str[setting_selected_item + 3]);
+					  setCursor(0,  0); print(setting_options[setting_selected_item]);
+					  setCursor(0,  1); print(setting_options[setting_selected_item + 1]);
+					  setCursor(0,  2); print(setting_options[setting_selected_item + 2]);
+					  setCursor(0,  3); print(setting_options[setting_selected_item + 3]);
 				  } else {
 					  setting_pointer += 1;
 					  if(setting_pointer == 4) {
-						  setCursor(0,  0); print(str[setting_selected_item - 3]);
-						  setCursor(0,  1); print(str[setting_selected_item - 2]);
-						  setCursor(0,  2); print(str[setting_selected_item - 1]);
-						  setCursor(0,  3); print(str[setting_selected_item]);
+						  setCursor(0,  0); print(setting_options[setting_selected_item - 3]);
+						  setCursor(0,  1); print(setting_options[setting_selected_item - 2]);
+						  setCursor(0,  2); print(setting_options[setting_selected_item - 1]);
+						  setCursor(0,  3); print(setting_options[setting_selected_item]);
 						  setting_pointer = 3;
 					  }
 				  }
@@ -972,32 +998,34 @@ void setting_t(void const * argument)
 				  if(setting_selected_item == 0) {
 					  setting_selected_item = SETTING_MAX_ITEMS - 1;
 					  setting_pointer = 3;
-					  setCursor(0,  0); print(str[setting_selected_item - 3]);
-					  setCursor(0,  1); print(str[setting_selected_item - 2]);
-					  setCursor(0,  2); print(str[setting_selected_item - 1]);
-					  setCursor(0,  3); print(str[setting_selected_item]);
+					  setCursor(0,  0); print(setting_options[setting_selected_item - 3]);
+					  setCursor(0,  1); print(setting_options[setting_selected_item - 2]);
+					  setCursor(0,  2); print(setting_options[setting_selected_item - 1]);
+					  setCursor(0,  3); print(setting_options[setting_selected_item]);
 				  } else {
 					  setting_selected_item -= 1;
 					  if(setting_pointer == 0) {
-						  setCursor(0,  0); print(str[setting_selected_item]);
-						  setCursor(0,  1); print(str[setting_selected_item + 1]);
-						  setCursor(0,  2); print(str[setting_selected_item + 2]);
-						  setCursor(0,  3); print(str[setting_selected_item + 3]);
+						  setCursor(0,  0); print(setting_options[setting_selected_item]);
+						  setCursor(0,  1); print(setting_options[setting_selected_item + 1]);
+						  setCursor(0,  2); print(setting_options[setting_selected_item + 2]);
+						  setCursor(0,  3); print(setting_options[setting_selected_item + 3]);
 						  setting_pointer = 1;
 					  }
 					  setting_pointer -= 1;
 				  }
 				  setCursor(0, setting_pointer); print("-");
 				  break;
-			  case 6:
-				  setCursor(0, setting_pointer); print(" ");
+			  case 5:
+//				  setCursor(0, setting_pointer); print(" ");
 				  setting_choosing_state = 0;
 				  setCursor(0, setting_pointer); print(">");
 				  break;
-			  case 5:
+			  case 4:
 				  tsignals[MENU_T] = 0;
 				  tsignals[SETTING_T] = 0;
 				  game_state = MENU;
+				  setting_pointer = 0;
+				  setting_selected_item = 0;
 				  osSignalSet(MenuPageHandle, 0);
 				  break;
 
@@ -1009,64 +1037,67 @@ void setting_t(void const * argument)
 					case 0:
 						initial_health += 1;
 						if(initial_health > 9) initial_health = 9;
-						setCursor(10, setting_pointer); sprintf(str[0][10], "%d", initial_health); print(str[0][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[0] + 10, "%d", initial_health); print(setting_options[0] + 10);
 						break;
 					case 1:
 						initial_speed += 1;
 						if(initial_speed > 9) initial_speed = 9;
-						setCursor(10, setting_pointer); sprintf(str[1][10], "%d", initial_speed); print(str[1][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[1] + 10, "%d", initial_speed); print(setting_options[1] + 10);
 						break;
 					case 2:
 						sound_state = sound_state ? 0 : 1;
-						setCursor(10, setting_pointer); sprintf(str[2][10], "%s", sound_state ? "on " : "off"); print(str[2][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[2] + 10, "%s", sound_state ? "on " : "off"); print(setting_options[2] + 10);
 						break;
 					case 3:
 						blocks_number += 1;
 						if(blocks_number > 6) blocks_number = 6;
-						setCursor(10, setting_pointer); sprintf(str[3][10], "%d", blocks_number); print(str[3][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[3] + 10, "%d", blocks_number); print(setting_options[3] + 10);
 						break;
 					case 4:
 						//player_name change
 						player_name[0]++;
-						setCursor(10, setting_pointer); sprintf(str[4][10], "%s", player_name); print(str[4][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[4] + 10, "%s", player_name); print(setting_options[4] + 10);
 						break;
 				}
 				  break;
-			  case 10:
+			  case 8:
 				  switch (setting_selected_item) {
 					case 0:
 						if(initial_health == 0) initial_health = 1;
 						initial_health -= 1;
-						setCursor(10, setting_pointer); sprintf(str[0][10], "%d", initial_health); print(str[0][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[0] + 10, "%d", initial_health); print(setting_options[0] + 10);
 						break;
 					case 1:
 						if(initial_speed == 0) initial_speed = 1;
 						initial_speed -= 1;
-						setCursor(10, setting_pointer); sprintf(str[1][10], "%d", initial_speed); print(str[1][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[1] + 10, "%d", initial_speed); print(setting_options[1] + 10);
 						break;
 					case 2:
 						sound_state = sound_state ? 0 : 1;
-						setCursor(10, setting_pointer); sprintf(str[2][10], "%s", sound_state ? "on " : "off"); print(str[2][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[2] + 10, "%s", sound_state ? "on " : "off"); print(setting_options[2] + 10);
 					case 3:
 						if(blocks_number == 0) blocks_number = 1;
 						blocks_number -= 1;
-						setCursor(10, setting_pointer); sprintf(str[3][10], "%d", blocks_number); print(str[3][10]);
+						setCursor(10, setting_pointer); sprintf(setting_options[3] + 10, "%d", blocks_number); print(setting_options[3] + 10);
 						break;
 					case 4:
 					player_name[0]--;
-					setCursor(10, setting_pointer); sprintf(str[4][10], "%s", player_name); print(str[4][10]);
+					setCursor(10, setting_pointer); sprintf(setting_options[4] + 10, "%s", player_name); print(setting_options[4] + 10);
 						break;
 				  }
 				  break;
-			  case 6:
+			  case 5:
 				  setCursor(0, setting_selected_item); print(" ");
 				  setting_choosing_state = 1;
 				  setCursor(0, setting_selected_item); print("-");
 				  break;
-			  case 5:
-				  game_state = MENU;
+			  case 4:
 				  tsignals[MENU_T] = 0;
 				  tsignals[SETTING_T] = 0;
+				  game_state = MENU;
+				  setting_pointer = 0;
+				  setting_selected_item = 0;
+				  osSignalSet(MenuPageHandle, 0);
 				  break;
 			  }
 		  }
@@ -1101,12 +1132,12 @@ void mode_t(void const * argument)
 		  switch(tsignals[MODE_T]) {
 		  case 0:
 			  clear();
-			  setCursor(0, 0); print(selected_mode == 0 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE1:dnt tch urslf");
-			  setCursor(0, 1); print(selected_mode == 1 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE2:dnt tch walls");
+			  setCursor(0, 0); print(selected_mode == 0 ? ">" : (mode_selected_item == 0 ? "-" : " ")); print("MODE1:dnt tch urslf");
+			  setCursor(0, 1); print(selected_mode == 1 ? ">" : (mode_selected_item == 1 ? "-" : " ")); print("MODE2:dnt tch walls");
 			  setCursor(0, 2); print(selected_mode == 2 ? ">" : (mode_selected_item == 2 ? "-" : " ")); print("MODE3:spd is incrsg");
 			  setCursor(0, 3); print("-^-^-^-^-^-^-^-^-^-^");
 			  break;
-		  case 10:
+		  case 8:
 			  setCursor(0, mode_selected_item); print(" ");
 			  mode_selected_item += 1;
 			  if(mode_selected_item == 3) mode_selected_item = 0;
@@ -1118,12 +1149,12 @@ void mode_t(void const * argument)
 			  mode_selected_item -= 1;
 			  setCursor(0, mode_selected_item); print(selected_mode == mode_selected_item ? ">" : "-");
 			  break;
-		  case 6:
+		  case 5:
 			  setCursor(0, selected_mode); print(" ");
 			  selected_mode = mode_selected_item;
 			  setCursor(0, selected_mode); print(">");
 			  break;
-		  case 5:
+		  case 4:
 			  game_state = MENU;
 			  tsignals[MENU_T] = 0;
 			  tsignals[MODE_T] = 0;
@@ -1148,27 +1179,34 @@ void about_t(void const * argument)
   /* Infinite loop */
 	static uint8_t second = 0;
 	static char str[5] = "00:00";
-	osSignalWait(0, osWaitForever);
-  for(;;)
-  {
-	  switch (tsignals[ABOUT_T]) {
+
+
+	for(;;)
+	{
+		switch(tsignals[ABOUT_T]) {
 		case 0:
+			osSignalWait(0, osWaitForever);
 			setCursor(0, 0); print("Developed By:       ");
 			setCursor(0, 1); print("S.Pouria Hosseini   ");
 			setCursor(0, 2); print("M.Amin   Hatefi   ");
-			setCursor(0, 3); sprintf(str, "%d:%d   ", second % 60, second); print(str);
-			++second;
+			setCursor(0, 3); sprintf(str, "%d:%d   ", (second / 60) % 60, second % 60); print(str);
+			tsignals[ABOUT_T] = 1;
 			break;
-		case 5:
+		case 4:
+			tsignals[MENU_T] = 0;
+			tsignals[ABOUT_T] = 0;
 			game_state = MENU;
-		    tsignals[MENU_T] = 0;
-		    tsignals[ABOUT_T] = 0;
-		    osSignalSet(MenuPageHandle, 0);
-		    osSignalWait(0, osWaitForever);
+			osSignalSet(MenuPageHandle, 0);
+			osSignalWait(0, osWaitForever);
 			break;
-	}
+		default:
+			setCursor(0, 3); sprintf(str, "%d:%d   ", (second / 60) % 60, second % 60); print(str);
+			++second;
+			osDelay(1000);
+			break;
+		}
 
-  }
+	}
   /* USER CODE END about_t */
 }
 
@@ -1192,7 +1230,6 @@ void movingSnake(void const * argument)
 	  	  initialGame();
 
 	  	  while(game_state == START) {
-				osDelay(2000);
 
 			  setCursor(snake.snake_head->col, snake.snake_head->row);
 			  write(0);
@@ -1200,7 +1237,10 @@ void movingSnake(void const * argument)
 				setCursor(snake.snake_head->next->col, snake.snake_head->next->row);
 				print(" ");
 
+				snake.snake_head->next->col = snake.snake_head->col;
+				snake.snake_head->next->row = snake.snake_head->row;
 				snake.snake_head = snake.snake_head->next;
+
 
 				switch(direction) {
 				case UP:
@@ -1220,15 +1260,16 @@ void movingSnake(void const * argument)
 					break;
 				case LEFT:
 					if(snake.snake_head->col == 0)
-						snake.snake_head->row = 20;
-					snake.snake_head->row -= 1;
+						snake.snake_head->col = 20;
+					snake.snake_head->col -= 1;
 					break;
 				}
 
      			setCursor(snake.snake_head->col, snake.snake_head->row);
-     			write(2);
+     			write(direction + 1);
 
-				osDelay(2000);
+
+				osDelay(500);
 	  	  }
   }
   /* USER CODE END movingSnake */
@@ -1252,6 +1293,42 @@ void updateMelody_t(void const * argument)
 //    osDelay(1);
   }
   /* USER CODE END updateMelody_t */
+}
+
+/* USER CODE BEGIN Header_soundEffect_t */
+/**
+* @brief Function implementing the SoundEffect thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_soundEffect_t */
+void soundEffect_t(void const * argument)
+{
+  /* USER CODE BEGIN soundEffect_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END soundEffect_t */
+}
+
+/* USER CODE BEGIN Header_sevenSegment_t */
+/**
+* @brief Function implementing the sevenSegment thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_sevenSegment_t */
+void sevenSegment_t(void const * argument)
+{
+  /* USER CODE BEGIN sevenSegment_t */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END sevenSegment_t */
 }
 
 /**
