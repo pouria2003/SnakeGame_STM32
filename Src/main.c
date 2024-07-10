@@ -1183,16 +1183,24 @@ void movingSnake(void const * argument)
 {
   /* USER CODE BEGIN movingSnake */
   /* Infinite loop */
+
   for(;;)
   {
 	  // clear one node of snake body
 	  	  osSignalWait(0, osWaitForever);
-	  	  while(game_state == START) {
-			  setCursor(snake.snake_head->col, snake.snake_head->row);
-			  print(" ");
+	  	  clear();
+	  	  initialGame();
 
-			  uint8_t prev_col = snake.snake_head->col;
-			  uint8_t prev_row = snake.snake_head->row;
+	  	  while(game_state == START) {
+				osDelay(2000);
+
+			  setCursor(snake.snake_head->col, snake.snake_head->row);
+			  write(0);
+
+				setCursor(snake.snake_head->next->col, snake.snake_head->next->row);
+				print(" ");
+
+				snake.snake_head = snake.snake_head->next;
 
 				switch(direction) {
 				case UP:
@@ -1217,24 +1225,10 @@ void movingSnake(void const * argument)
 					break;
 				}
 
-				setCursor(snake.snake_head->col, snake.snake_head->row);
-				write(snake.snake_head->custom_char_ind);
+     			setCursor(snake.snake_head->col, snake.snake_head->row);
+     			write(2);
 
-
-				Node* current_node = snake.snake_head->next;
-
-				while(current_node != NULL) {
-					// clear one node of snake body
-					setCursor(current_node->col, current_node->row);
-					print(" ");
-					// updating node
-					current_node->col = prev_col;
-					current_node->row = prev_row;
-					// printing it in new position
-					setCursor(current_node->col, current_node->row);
-					write(current_node->custom_char_ind);
-					current_node = current_node->next;
-				}
+				osDelay(2000);
 	  	  }
   }
   /* USER CODE END movingSnake */

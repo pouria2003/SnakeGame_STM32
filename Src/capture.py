@@ -13,5 +13,5 @@ while 1:
     if input_char == b'\x03': # CTRL + C
         break
         
-    print(input_char.upper() + b"\n")
-    ser.write(input_char.upper() + b"\n")
+    print(input_char.upper() + b"\r")
+    ser.write(input_char.upper())

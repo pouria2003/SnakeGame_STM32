@@ -29,7 +29,6 @@ enum Directions {
 };
 
 typedef struct Node {
-	uint8_t custom_char_ind;
 	struct Node *next;
 	uint8_t col;
 	uint8_t row;
@@ -37,7 +36,6 @@ typedef struct Node {
 
 
 typedef struct Snake {
-	Node *snake_tail;
 	Node *snake_head;
 } Snake;
 
