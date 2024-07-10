@@ -20,6 +20,20 @@ Snake snake = {NULL};
 
 uint8_t direction = RIGHT;
 
+//--------number to 7448
+GPIO_TypeDef * pinType = GPIOD;
+uint16_t bit0 = GPIO_PIN_4;
+uint16_t bit1 = GPIO_PIN_7;
+uint16_t bit2 = GPIO_PIN_6;
+uint16_t bit3 = GPIO_PIN_5;
+
+//--------digit to be turned on
+uint16_t bitActive0 = GPIO_PIN_3;
+uint16_t bitActive1 = GPIO_PIN_2;
+uint16_t bitActive2 = GPIO_PIN_1;
+uint16_t bitActive3 = GPIO_PIN_0;
+
+
 void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	switch(game_state) {
 	case INTRO:
@@ -159,6 +173,26 @@ uint8_t strcmpwithlength(const char * str1, const char * str2, const uint8_t len
 	return 1;
 }
 
+
+
+void display_digit(uint8_t num, uint8_t digit, uint8_t dcpoint)
+{
+	// Which of the four digits is this
+	// Active high 7-segment, low pinType -> digit on
+    HAL_GPIO_WritePin(pinType, bitActive0, digit == 0 ? 0 : 1);
+    HAL_GPIO_WritePin(pinType, bitActive1, digit == 1 ? 0 : 1);
+    HAL_GPIO_WritePin(pinType, bitActive2, digit == 2 ? 0 : 1);
+    HAL_GPIO_WritePin(pinType, bitActive3, digit == 3 ? 0 : 1);
+
+    // ABCD BCD Output
+    HAL_GPIO_WritePin(pinType, bit0, (num == 1 || num == 3 || num == 5 || num == 7 || num == 9));
+    HAL_GPIO_WritePin(pinType, bit1, (num == 2 || num == 3 || num == 6 || num == 7));
+    HAL_GPIO_WritePin(pinType, bit2, (num == 4 || num == 5 || num == 6 || num == 7));
+    HAL_GPIO_WritePin(pinType, bit3, (num == 8 || num == 9));
+
+    // Is decimal point on or off for digit?
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, dcpoint == 1 ? 1 : 0);
+}
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)

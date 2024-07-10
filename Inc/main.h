@@ -156,6 +156,8 @@ extern char player_name[7];
 extern char setting_options[SETTING_MAX_ITEMS][21];
 
 
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

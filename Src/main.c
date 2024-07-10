@@ -116,7 +116,7 @@ uint8_t sound_state = 0;
 uint8_t blocks_number = 3;
 uint8_t selected_mode = 1;
 char player_name[7] = "pouria";
-
+uint8_t digits[4] = {0, 0, 0, 0};
 
 
 char received_data[50];
@@ -213,7 +213,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of IntroPage */
-  osThreadDef(IntroPage, introPage_t, osPriorityNormal, 0, 128);
+  osThreadDef(IntroPage, introPage_t, osPriorityIdle, 0, 128);
   IntroPageHandle = osThreadCreate(osThread(IntroPage), NULL);
 
   /* definition and creation of MenuPage */
@@ -1323,10 +1323,18 @@ void soundEffect_t(void const * argument)
 void sevenSegment_t(void const * argument)
 {
   /* USER CODE BEGIN sevenSegment_t */
+
+	static uint8_t digit = 0;
+
+//	osSignalWait(0, osWaitForever);
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+//	if(digit > 3) digit = 0;
+//	display_digit(digits[digit], digit, digit == 1 ? 1 : 0);
+//	++digit;
+	if()
+	osDelay(1);
   }
   /* USER CODE END sevenSegment_t */
 }

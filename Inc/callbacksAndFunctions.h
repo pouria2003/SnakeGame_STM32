@@ -10,6 +10,22 @@
 
 #include "main.h"
 
+//--------number to 7448
+extern GPIO_TypeDef * pinType;
+extern uint16_t bit0;
+extern uint16_t bit1;
+extern uint16_t bit2;
+extern uint16_t bit3;
+
+//--------digit to be turned on
+extern uint16_t bitActive0;
+extern uint16_t bitActive1;
+extern uint16_t bitActive2;
+extern uint16_t bitActive3;
+
+//--------Digits
+extern uint8_t digits[4];
+
 
 
 enum GameState {
@@ -62,6 +78,7 @@ void moveSnake();
 void initialGame();
 void addNodeFront(uint8_t col, uint8_t row);
 void flowHandler(uint8_t keypad_button_number, uint8_t item_selected);
+void display_digit(uint8_t num, uint8_t digit, uint8_t dcpoint);
 
 
 
