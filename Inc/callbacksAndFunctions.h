@@ -59,6 +59,11 @@ enum ChooseState {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+uint8_t strcmpwithlength(const char * str1, const char * str2, const uint8_t len);
+void moveSnake();
+void initialGame();
+void addNodeFront(uint8_t col, uint8_t row, uint8_t custom_char);
+void flowHandler(uint8_t keypad_button_number, uint8_t item_selected);
 
 
 

@@ -19,12 +19,13 @@ typedef struct
     uint16_t duration;
 } Tone;
 
+extern const Tone snake_song[];
 
 void PWM_Start();
 void PWM_Change_Tone(uint16_t pwm_freq, uint16_t volume);
 void Change_Melody(const Tone *melody, uint16_t tone_count);
 void Update_Melody();
-uint16_t array_length(Tone* arr);
+
 
 
 

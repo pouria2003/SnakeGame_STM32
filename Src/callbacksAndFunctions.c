@@ -15,18 +15,6 @@
 
 #define NTHREADS 6
 
-extern uint8_t game_state;
-
-extern osThreadId MenuPageHandle;
-extern osThreadId startHandle;
-extern osThreadId settingHandle;
-extern osThreadId modeHandle;
-extern osThreadId aboutHandle;
-extern enum Threads;
-
-extern uint8_t tsignals[NTHREADS];
-
-extern UART_HandleTypeDef huart1;
 
 Snake snake = {NULL};
 
@@ -37,7 +25,7 @@ void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	case INTRO:
 		tsignals[INTRO_T] = 0;
 		game_state = MENU;
-		osSignalSet(MenuPageHandle, 0);
+//		osSignalSet(MenuPageHandle, 0);
 		break;
 	case MENU:
 		tsignals[MENU_T] = keypad_button_number;
@@ -54,9 +42,11 @@ void flowHandler(uint8_t keypad_button_number, uint8_t item_selected) {
 	case MODE:
 		tsignals[MODE_T] = keypad_button_number;
 		osSignalSet(modeHandle, 0);
+		break;
 	case ABOUT:
 		tsignals[ABOUT_T] = keypad_button_number;
-//		osSignalSet(aboutHandle, 0);
+		osSignalSet(aboutHandle, 0);
+		break;
 	}
 
 }
@@ -137,21 +127,74 @@ void moveSnake() {
 		write(current_node->custom_char_ind);
 		current_node = current_node->next;
 	}
-
-
-
 }
+
+uint8_t strcmpwithlength(const char * str1, const char * str2, const uint8_t len)
+{
+	for(int i = 0 ; i < len; ++i) {
+		if(str1[i] != str2[i])
+			return 0;
+	}
+	return 1;
+}
+
 
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	const char* HEALTH = "health";
+	const char* SPEED = "speed";
+	const char* SOUNDS = "sounds"; const char* ON = "on"; const char* OFF = "off";
+	const char* BLOCKS = "blocks";
+	const char* NAME = "name";
 	if(huart->Instance == USART1) {
+
 		HAL_UART_Receive_IT(&huart1, &receive, 1);
 		received_data[data_index] = receive;
 		++data_index;
 
 		if(receive == '\r') {
-			flowHandler(received_data[0] - '0', 0);
+//			for(int i = 0; received_data[i] != '\r'; ++i) {
+//				pressed_number *= 10;
+//				pressed_number += received_data[i] - '0';
+//			}
+			if(received_data[0] <= '9' && received_data[0] >= '0') {
+				flowHandler(received_data[0] - '0', 0);
+				transmit_data[0] = '\0';
+
+			} else if(strcmpwithlength(received_data, HEALTH, 6) && received_data[6] == ':' && data_index < 10) {
+				initial_health = received_data[7] - '0';
+				sprintf(transmit_data, "Initial health changed to %d (max = 9)", initial_health);
+				sprintf(setting_options[0] + 10, "%d", initial_health);
+
+			} else if(strcmpwithlength(received_data, SPEED, 5) && received_data[5] == ':' && data_index < 9) {
+				initial_speed = received_data[6] - '0';
+				sprintf(transmit_data, "Initial speed changed to %d (max = 9)", initial_speed);
+				sprintf(setting_options[1] + 10, "%d", initial_speed);
+
+			} else if(strcmpwithlength(received_data, SOUNDS, 6) && received_data[6] == ':' && data_index < 12
+					  && (strcmpwithlength(received_data + 7, ON, 2) || strcmpwithlength(received_data + 7, OFF, 3))) {
+				sound_state = received_data[8] == 'n' ? 1 : 0;
+				sprintf(transmit_data, "Sounds changed to %s", sound_state ? "on" : "off");
+				sprintf(setting_options[2] + 10, "%s", sound_state ? "on " : "off");
+
+			} else if(strcmpwithlength(received_data, BLOCKS, 6) && received_data[6] == ':' && data_index < 10) {
+				initial_health = received_data[7] - '0';
+				if(blocks_number > 6) blocks_number = 6;
+				  sprintf(setting_options[3] + 10, "%d", blocks_number);
+				sprintf(transmit_data, "Number of blocks changed to %d (max = 6)", blocks_number);
+
+			} else if(strcmpwithlength(received_data, NAME, 4) && received_data[4] == ':' && data_index < 13) {
+				sprintf(player_name, "%s", received_data + 5);
+				player_name[data_index - 6] = '\0';
+				//name:amin/t
+				sprintf(transmit_data, "Player name changed to %s (max character = 6)", player_name);
+				sprintf(setting_options[4] + 10, "%s", player_name);
+
+			} else {
+				sprintf(transmit_data, "Unvalid command try again", player_name);
+			}
+			HAL_UART_Transmit(&huart1, transmit_data, strlen(transmit_data), HAL_MAX_DELAY);
 			data_index = 0;
 		}
 	}
